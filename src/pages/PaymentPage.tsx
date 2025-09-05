@@ -116,32 +116,18 @@ export default function PaymentPage() {
           // Also load completed orders for payment status checking
           // Use projectData.id instead of project?.id since project state hasn't updated yet
           if (user?.id && projectData.id) {
-            console.log('Loading completed orders for user:', user.id)
-            
             const { data: customerData, error: customerError } = await supabase
               .from('stripe_customers')
               .select('customer_id')
               .eq('user_id', user.id)
               .maybeSingle()
 
-            console.log('Customer lookup result:', {
-              userId: user.id,
-              customerData,
-              customerError
-            })
-
             if (customerError) {
               console.error('Error fetching customer data:', customerError)
               setCompletedOrders([])
             } else if (!customerData) {
-              console.log('No Stripe customer found for user - they will be created on first payment')
               setCompletedOrders([])
             } else {
-              console.log('🔍 Loading orders with filters:', {
-                customerId: customerData.customer_id,
-                projectId: projectData.id,
-                status: 'completed'
-              })
 
               const { data: completedOrdersData, error: ordersError } = await supabase
                 .from('stripe_orders')
@@ -150,22 +136,7 @@ export default function PaymentPage() {
                 .eq('project_id', projectData.id)
                 .eq('status', 'completed')
 
-              console.log('📊 Order query result:', {
-                completedOrdersData,
-                ordersError,
-                count: completedOrdersData?.length || 0,
-                orders: completedOrdersData?.map(o => ({
-                  id: o.id,
-                  product_id: o.product_id,
-                  project_id: o.project_id,
-                  status: o.status,
-                  amount: o.amount_total
-                }))
-              })
-
               if (!ordersError) {
-                console.log('✅ Loaded completed orders:', completedOrdersData)
-                console.log('📋 Setting completed orders state with:', completedOrdersData?.length || 0, 'orders')
                 setCompletedOrders(completedOrdersData || [])
               } else {
                 console.error('Error loading completed orders:', ordersError)
@@ -195,37 +166,11 @@ export default function PaymentPage() {
     loadData()
   }, [projectId, navigate, paymentStatus])
 
-  // Debug: Monitor completedOrders state changes
-  useEffect(() => {
-    console.log('🔄 completedOrders state changed:', {
-      count: completedOrders.length,
-      orders: completedOrders.map(o => ({
-        id: o.id,
-        product_id: o.product_id,
-        project_id: o.project_id,
-        status: o.status,
-        amount: o.amount_total
-      }))
-    })
-  }, [completedOrders])
 
   // Helper function to check if a specific payment type is completed
   const isPaymentCompleted = (productKey: string) => {
     // The webhook stores product keys (like 'SECURITY_DEPOSIT') not Stripe product IDs
     const isCompleted = completedOrders.some(order => order.product_id === productKey)
-    console.log(`🔍 Payment check for ${productKey}:`, {
-      productKey,
-      completedOrders: completedOrders.length,
-      isCompleted,
-      orders: completedOrders.map(o => ({ 
-        id: o.id, 
-        amount: o.amount_total, 
-        product: o.product_id, 
-        project: o.project_id,
-        status: o.status 
-      })),
-      allOrders: completedOrders
-    })
     return isCompleted
   }
 
@@ -233,39 +178,20 @@ export default function PaymentPage() {
   const areAllPaymentsCompleted = () => {
     const requiredProducts = ['SECURITY_DEPOSIT', 'DISASTERSHIELD_SERVICE_FEE', 'EMERGENCY_RESPONSE_FEE']
     const allCompleted = requiredProducts.every(productKey => isPaymentCompleted(productKey))
-    console.log('📋 All payments completed check:', {
-      requiredProducts,
-      allCompleted,
-      projectPaymentStatus: project?.payment_status,
-      completedOrdersCount: completedOrders.length,
-      breakdown: requiredProducts.map(productKey => ({
-        productKey,
-        stripeProductId: STRIPE_PRODUCTS[productKey as keyof typeof STRIPE_PRODUCTS]?.id,
-        isCompleted: isPaymentCompleted(productKey)
-      }))
-    })
     return allCompleted
   }
 
   // Debug function to help troubleshoot payment detection
   const debugPaymentState = () => {
-    console.log('🐛 DEBUG: Current Payment State', {
+    console.log('🐛 Payment State:', {
       user: user?.id,
       project: project?.id,
       completedOrders: completedOrders.length,
       orders: completedOrders.map(o => ({
-        id: o.id,
-        product_id: o.product_id,
-        project_id: o.project_id,
-        customer_id: o.customer_id,
+        product: o.product_id,
         status: o.status,
         amount: o.amount_total
-      })),
-      expectedProductIds: {
-        SECURITY_DEPOSIT: STRIPE_PRODUCTS.SECURITY_DEPOSIT.id,
-        DISASTERSHIELD_SERVICE_FEE: STRIPE_PRODUCTS.DISASTERSHIELD_SERVICE_FEE.id,
-        EMERGENCY_RESPONSE_FEE: STRIPE_PRODUCTS.EMERGENCY_RESPONSE_FEE.id
-      }
+      }))
     })
   }
 
@@ -295,7 +221,6 @@ export default function PaymentPage() {
       }
 
       if (!customerData) {
-        console.log('No Stripe customer found for user - they will be created on first payment')
         toast.info('No payment history found. Customer will be created on first payment.', { id: 'payment-check' })
         return
       }
@@ -365,7 +290,6 @@ export default function PaymentPage() {
           .single()
 
         if (!error && updatedProject && updatedProject.payment_status !== project.payment_status) {
-          console.log('Payment status updated:', updatedProject.payment_status)
           setProject(prev => ({ ...prev, payment_status: updatedProject.payment_status }))
           clearInterval(pollForUpdates)
         }
@@ -434,8 +358,6 @@ export default function PaymentPage() {
     setError('')
 
     try {
-      console.log(`Initiating payment for ${productKey} in TEST mode`)
-      
       // Create Stripe checkout session
       const { sessionId, url: checkoutUrl } = await createCheckoutSession({
         productKey: productKey,
@@ -447,9 +369,6 @@ export default function PaymentPage() {
       if (!sessionId || !checkoutUrl) {
         throw new Error('Could not create checkout session')
       }
-
-      console.log(`Redirecting to checkout with session ID: ${sessionId}`)
-      console.log(`Using checkout URL from Stripe: ${checkoutUrl}`)
       
       try {
         // Use the URL provided by Stripe
@@ -677,11 +596,6 @@ export default function PaymentPage() {
                       {processing ? 'Processing...' : 'Pay Service Fee'}
                     </Button>
                   )}
-                  {/* Debug info */}
-                  <div className="mt-2 text-xs text-gray-500">
-                    Debug: {isPaymentCompleted('DISASTERSHIELD_SERVICE_FEE') ? 'Completed' : 'Not completed'} 
-                    ({completedOrders.length} orders loaded)
-                  </div>
                 </div>
 
                 {/* Emergency Service Fee */}
@@ -710,11 +624,6 @@ export default function PaymentPage() {
                       {processing ? 'Processing...' : 'Pay Emergency Fee'}
                     </Button>
                   )}
-                  {/* Debug info */}
-                  <div className="mt-2 text-xs text-gray-500">
-                    Debug: {isPaymentCompleted('EMERGENCY_RESPONSE_FEE') ? 'Completed' : 'Not completed'} 
-                    ({completedOrders.length} orders loaded)
-                  </div>
                 </div>
               </CardContent>
             </Card>

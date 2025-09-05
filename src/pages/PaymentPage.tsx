@@ -107,11 +107,13 @@ export default function PaymentPage() {
 
         // Load user's order history for this project
         try {
-          const orderHistory = await getUserOrders(project.id)
-          setOrders(orderHistory)
+          if (project?.id) {
+            const orderHistory = await getUserOrders(project.id)
+            setOrders(orderHistory)
+          }
           
           // Also load completed orders for payment status checking
-          if (user) {
+          if (user?.id && project?.id) {
             console.log('Loading completed orders for user:', user.id)
             
             const { data: customerData, error: customerError } = await supabase
@@ -167,9 +169,11 @@ export default function PaymentPage() {
         }
 
         // Check if all orders are completed and update project status
-        setTimeout(async () => {
-          await checkAndUpdatePaymentStatus()
-        }, 1000)
+        if (project?.id && user?.id) {
+          setTimeout(async () => {
+            await checkAndUpdatePaymentStatus()
+          }, 1000)
+        }
       } catch (error) {
         console.error('Error loading payment data:', error)
         setError('Failed to load project details')
@@ -299,7 +303,7 @@ export default function PaymentPage() {
 
   // Add polling to check for payment status updates
   useEffect(() => {
-    if (!project || project.payment_status === 'paid') return
+    if (!project?.id || project.payment_status === 'paid') return
 
     const pollForUpdates = setInterval(async () => {
       try {

@@ -165,11 +165,19 @@ export async function getUserSubscription() {
 // Get user's order history for a specific project
 export async function getUserOrders(projectId?: string) {
   try {
-    // First get the user's Stripe customer ID
+    // First get the current user
+    const { data: { user }, error: userError } = await supabase.auth.getUser()
+    
+    if (userError || !user) {
+      console.error('Error getting user:', userError)
+      return []
+    }
+
+    // Then get the user's Stripe customer ID
     const { data: customerData, error: customerError } = await supabase
       .from('stripe_customers')
       .select('customer_id')
-      .eq('user_id', (await supabase.auth.getUser()).data.user?.id)
+      .eq('user_id', user.id)
       .maybeSingle()
 
     if (customerError) {

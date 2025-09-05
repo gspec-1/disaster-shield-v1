@@ -88,40 +88,6 @@ Deno.serve(async (req) => {
       );
     }
 
-    // CRITICAL: Check for duplicate payments before creating checkout session
-    if (mode === 'payment') {
-      // Get the product_id from the price_id if not provided
-      let actualProductId = product_id;
-      if (!actualProductId) {
-        const priceDetails = await stripe.prices.retrieve(price_id);
-        actualProductId = priceDetails.product as string;
-      }
-      
-      // Check if this user has already completed a payment for this product and project
-      const { data: existingOrders, error: existingOrdersError } = await supabase
-        .from('stripe_orders')
-        .select('id, status')
-        .eq('customer_id', customer.id)
-        .eq('project_id', project_id)
-        .eq('product_id', actualProductId)
-        .eq('status', 'completed');
-
-      if (existingOrdersError) {
-        console.error('Error checking for existing orders:', existingOrdersError);
-      } else if (existingOrders && existingOrders.length > 0) {
-        console.log(`Duplicate payment attempt blocked for user ${user.id}, project ${project_id}, product ${actualProductId}`);
-        return new Response(
-          JSON.stringify({ 
-            error: 'Payment already completed', 
-            message: 'This payment has already been completed for this project. Please refresh the page to see updated status.' 
-          }),
-          { 
-            status: 400, 
-            headers: { ...corsHeaders, 'Content-Type': 'application/json' } 
-          }
-        );
-      }
-    }
 
     // Validate mode
     if (!['payment', 'subscription'].includes(mode)) {
@@ -271,6 +237,41 @@ Deno.serve(async (req) => {
           }),
           { 
             status: 500, 
+            headers: { ...corsHeaders, 'Content-Type': 'application/json' } 
+          }
+        );
+      }
+    }
+
+    // CRITICAL: Check for duplicate payments before creating checkout session
+    if (mode === 'payment') {
+      // Get the product_id from the price_id if not provided
+      let actualProductId = product_id;
+      if (!actualProductId) {
+        const priceDetails = await stripe.prices.retrieve(price_id);
+        actualProductId = priceDetails.product as string;
+      }
+      
+      // Check if this user has already completed a payment for this product and project
+      const { data: existingOrders, error: existingOrdersError } = await supabase
+        .from('stripe_orders')
+        .select('id, status')
+        .eq('customer_id', customerId)
+        .eq('project_id', project_id)
+        .eq('product_id', actualProductId)
+        .eq('status', 'completed');
+
+      if (existingOrdersError) {
+        console.error('Error checking for existing orders:', existingOrdersError);
+      } else if (existingOrders && existingOrders.length > 0) {
+        console.log(`Duplicate payment attempt blocked for user ${user.id}, project ${project_id}, product ${actualProductId}`);
+        return new Response(
+          JSON.stringify({ 
+            error: 'Payment already completed', 
+            message: 'This payment has already been completed for this project. Please refresh the page to see updated status.' 
+          }),
+          { 
+            status: 400, 
             headers: { ...corsHeaders, 'Content-Type': 'application/json' } 
           }
         );

@@ -183,9 +183,14 @@ export default function PaymentPage() {
 
   // Helper function to check if a specific payment type is completed
   const isPaymentCompleted = (productKey: string) => {
-    const isCompleted = completedOrders.some(order => order.product_id === productKey)
+    // Get the actual Stripe product ID for this product key
+    const product = STRIPE_PRODUCTS[productKey as keyof typeof STRIPE_PRODUCTS]
+    const stripeProductId = product?.id
+    
+    const isCompleted = completedOrders.some(order => order.product_id === stripeProductId)
     console.log(`Payment check for ${productKey}:`, {
       productKey,
+      stripeProductId,
       completedOrders: completedOrders.length,
       isCompleted,
       orders: completedOrders.map(o => ({ amount: o.amount_total, product: o.product_id })),
@@ -256,9 +261,11 @@ export default function PaymentPage() {
       const requiredProducts = ['SECURITY_DEPOSIT', 'DISASTERSHIELD_SERVICE_FEE', 'EMERGENCY_RESPONSE_FEE']
       const completedProductIds = completedOrders?.map(order => order.product_id) || []
       
-      const allRequiredCompleted = requiredProducts.every(productId => 
-        completedProductIds.includes(productId)
-      )
+      const allRequiredCompleted = requiredProducts.every(productKey => {
+        const product = STRIPE_PRODUCTS[productKey as keyof typeof STRIPE_PRODUCTS]
+        const stripeProductId = product?.id
+        return completedProductIds.includes(stripeProductId)
+      })
 
       // Update project payment status if all orders are completed
       if (allRequiredCompleted && project.payment_status !== 'paid') {
@@ -361,6 +368,12 @@ export default function PaymentPage() {
 
   const handlePayment = async (productKey: ProductKey) => {
     if (!project || !user) return
+
+    // CRITICAL: Check if payment is already completed to prevent duplicates
+    if (isPaymentCompleted(productKey)) {
+      toast.error(`❌ This payment has already been completed! Please refresh the page to see updated status.`)
+      return
+    }
 
     setProcessing(true)
     setError('')

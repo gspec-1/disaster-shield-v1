@@ -243,15 +243,15 @@ Deno.serve(async (req) => {
       }
     }
 
+    // Get the actual product_id from the price_id if not provided
+    let actualProductId = product_id;
+    if (!actualProductId) {
+      const priceDetails = await stripe.prices.retrieve(price_id);
+      actualProductId = priceDetails.product as string;
+    }
+
     // CRITICAL: Check for duplicate payments before creating checkout session
     if (mode === 'payment') {
-      // Get the product_id from the price_id if not provided
-      let actualProductId = product_id;
-      if (!actualProductId) {
-        const priceDetails = await stripe.prices.retrieve(price_id);
-        actualProductId = priceDetails.product as string;
-      }
-      
       // Check if this user has already completed a payment for this product and project
       const { data: existingOrders, error: existingOrdersError } = await supabase
         .from('stripe_orders')
@@ -315,14 +315,14 @@ Deno.serve(async (req) => {
         metadata: {
           project_id: project_id,
           user_id: user.id,
-          product_id: product_id
+          product_id: actualProductId
         },
         ...(mode === 'payment' && {
           payment_intent_data: {
             metadata: {
               user_id: user.id,
               project_id: project_id,
-              product_id: product_id,
+              product_id: actualProductId,
               source: 'disastershield'
             }
           }

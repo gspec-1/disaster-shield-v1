@@ -135,7 +135,7 @@ export default function PaymentPage() {
               console.log('No Stripe customer found for user - they will be created on first payment')
               setCompletedOrders([])
             } else {
-              console.log('Loading orders with filters:', {
+              console.log('🔍 Loading orders with filters:', {
                 customerId: customerData.customer_id,
                 projectId: project.id,
                 status: 'completed'
@@ -148,10 +148,17 @@ export default function PaymentPage() {
                 .eq('project_id', project.id)
                 .eq('status', 'completed')
 
-              console.log('Order query result:', {
+              console.log('📊 Order query result:', {
                 completedOrdersData,
                 ordersError,
-                count: completedOrdersData?.length || 0
+                count: completedOrdersData?.length || 0,
+                orders: completedOrdersData?.map(o => ({
+                  id: o.id,
+                  product_id: o.product_id,
+                  project_id: o.project_id,
+                  status: o.status,
+                  amount: o.amount_total
+                }))
               })
 
               if (!ordersError) {
@@ -192,12 +199,18 @@ export default function PaymentPage() {
     const stripeProductId = product?.id
     
     const isCompleted = completedOrders.some(order => order.product_id === stripeProductId)
-    console.log(`Payment check for ${productKey}:`, {
+    console.log(`🔍 Payment check for ${productKey}:`, {
       productKey,
       stripeProductId,
       completedOrders: completedOrders.length,
       isCompleted,
-      orders: completedOrders.map(o => ({ amount: o.amount_total, product: o.product_id })),
+      orders: completedOrders.map(o => ({ 
+        id: o.id, 
+        amount: o.amount_total, 
+        product: o.product_id, 
+        project: o.project_id,
+        status: o.status 
+      })),
       allOrders: completedOrders
     })
     return isCompleted
@@ -207,13 +220,40 @@ export default function PaymentPage() {
   const areAllPaymentsCompleted = () => {
     const requiredProducts = ['SECURITY_DEPOSIT', 'DISASTERSHIELD_SERVICE_FEE', 'EMERGENCY_RESPONSE_FEE']
     const allCompleted = requiredProducts.every(productKey => isPaymentCompleted(productKey))
-    console.log('All payments completed check:', {
+    console.log('📋 All payments completed check:', {
       requiredProducts,
       allCompleted,
       projectPaymentStatus: project?.payment_status,
-      completedOrdersCount: completedOrders.length
+      completedOrdersCount: completedOrders.length,
+      breakdown: requiredProducts.map(productKey => ({
+        productKey,
+        stripeProductId: STRIPE_PRODUCTS[productKey as keyof typeof STRIPE_PRODUCTS]?.id,
+        isCompleted: isPaymentCompleted(productKey)
+      }))
     })
     return allCompleted
+  }
+
+  // Debug function to help troubleshoot payment detection
+  const debugPaymentState = () => {
+    console.log('🐛 DEBUG: Current Payment State', {
+      user: user?.id,
+      project: project?.id,
+      completedOrders: completedOrders.length,
+      orders: completedOrders.map(o => ({
+        id: o.id,
+        product_id: o.product_id,
+        project_id: o.project_id,
+        customer_id: o.customer_id,
+        status: o.status,
+        amount: o.amount_total
+      })),
+      expectedProductIds: {
+        SECURITY_DEPOSIT: STRIPE_PRODUCTS.SECURITY_DEPOSIT.id,
+        DISASTERSHIELD_SERVICE_FEE: STRIPE_PRODUCTS.DISASTERSHIELD_SERVICE_FEE.id,
+        EMERGENCY_RESPONSE_FEE: STRIPE_PRODUCTS.EMERGENCY_RESPONSE_FEE.id
+      }
+    })
   }
 
   // Check if all required orders are completed and update project status
@@ -760,7 +800,7 @@ export default function PaymentPage() {
 
                 {/* Check Payment Status button */}
                 {!areAllPaymentsCompleted() && (
-                  <div className="mt-4">
+                  <div className="mt-4 flex gap-2">
                     <Button 
                       variant="outline" 
                       size="sm"
@@ -769,6 +809,14 @@ export default function PaymentPage() {
                       className="text-xs"
                     >
                       {checkingStatus ? '🔄 Checking...' : '🔄 Check Payment Status'}
+                    </Button>
+                    <Button 
+                      variant="secondary" 
+                      size="sm"
+                      onClick={debugPaymentState}
+                      className="text-xs"
+                    >
+                      🐛 Debug State
                     </Button>
                   </div>
                 )}

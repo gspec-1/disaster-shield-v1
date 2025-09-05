@@ -243,13 +243,6 @@ Deno.serve(async (req) => {
       }
     }
 
-    // Get the actual product_id from the price_id if not provided
-    let actualProductId = product_id;
-    if (!actualProductId) {
-      const priceDetails = await stripe.prices.retrieve(price_id);
-      actualProductId = priceDetails.product as string;
-    }
-
     // CRITICAL: Check for duplicate payments before creating checkout session
     if (mode === 'payment') {
       // Check if this user has already completed a payment for this product and project
@@ -258,13 +251,13 @@ Deno.serve(async (req) => {
         .select('id, status')
         .eq('customer_id', customerId)
         .eq('project_id', project_id)
-        .eq('product_id', actualProductId)
+        .eq('product_id', product_id)
         .eq('status', 'completed');
 
       if (existingOrdersError) {
         console.error('Error checking for existing orders:', existingOrdersError);
       } else if (existingOrders && existingOrders.length > 0) {
-        console.log(`Duplicate payment attempt blocked for user ${user.id}, project ${project_id}, product ${actualProductId}`);
+        console.log(`Duplicate payment attempt blocked for user ${user.id}, project ${project_id}, product ${product_id}`);
         return new Response(
           JSON.stringify({ 
             error: 'Payment already completed', 
@@ -315,14 +308,14 @@ Deno.serve(async (req) => {
         metadata: {
           project_id: project_id,
           user_id: user.id,
-          product_id: actualProductId
+          product_id: product_id
         },
         ...(mode === 'payment' && {
           payment_intent_data: {
             metadata: {
               user_id: user.id,
               project_id: project_id,
-              product_id: actualProductId,
+              product_id: product_id,
               source: 'disastershield'
             }
           }

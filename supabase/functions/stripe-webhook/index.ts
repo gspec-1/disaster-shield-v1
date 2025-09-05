@@ -96,8 +96,9 @@ async function handleEvent(event: Stripe.Event) {
 
   console.log('Stripe data:', JSON.stringify(stripeData, null, 2));
 
-  // for one time payments, we only listen for the checkout.session.completed event
+  // Skip payment_intent.succeeded events that are not from checkout sessions
   if (event.type === 'payment_intent.succeeded' && event.data.object.invoice === null) {
+    console.log('Skipping payment_intent.succeeded event (not from checkout session)');
     return;
   }
 
@@ -123,6 +124,8 @@ async function handleEvent(event: Stripe.Event) {
       await syncCustomerFromStripe(customerId);
     } else if (mode === 'payment' && payment_status === 'paid') {
       try {
+        console.log('Processing checkout.session.completed for one-time payment');
+        
         // Extract the necessary information from the session
         const {
           id: checkout_session_id,
@@ -147,7 +150,7 @@ async function handleEvent(event: Stripe.Event) {
           return;
         }
 
-        console.log(`Processing payment for project: ${projectId}`);
+        console.log(`Processing payment for project: ${projectId}, product: ${productId}`);
 
         // Insert the order into the stripe_orders table
         const { error: orderError } = await supabase.from('stripe_orders').insert({
@@ -160,7 +163,7 @@ async function handleEvent(event: Stripe.Event) {
           amount_total,
           currency,
           payment_status,
-          status: 'completed', // assuming we want to mark it as completed since payment is successful
+          status: 'completed',
         });
 
         if (orderError) {
@@ -168,24 +171,9 @@ async function handleEvent(event: Stripe.Event) {
           return;
         }
 
+        console.log('Order inserted successfully');
+
         // Update project payment status to paid
-        // We need to find the project associated with this customer
-        console.log(`Looking for customer: ${customerId}`);
-        const { data: customerData, error: customerError } = await supabase
-          .from('stripe_customers')
-          .select('user_id')
-          .eq('customer_id', customerId)
-          .single();
-
-        if (customerError || !customerData) {
-          console.error('Error finding customer:', customerError);
-          console.log('Customer data:', customerData);
-          return;
-        }
-
-        console.log(`Found customer data:`, customerData);
-
-        // Update only the specific project to paid status
         const { data: updatedProjects, error: projectError } = await supabase
           .from('projects')
           .update({ payment_status: 'paid' })
@@ -196,7 +184,7 @@ async function handleEvent(event: Stripe.Event) {
         if (projectError) {
           console.error('Error updating project payment status:', projectError);
         } else {
-          console.info(`Successfully updated ${updatedProjects?.length || 0} projects for user: ${customerData.user_id}`);
+          console.info(`Successfully updated ${updatedProjects?.length || 0} projects for payment: ${checkout_session_id}`);
           console.log('Updated projects:', updatedProjects);
         }
 

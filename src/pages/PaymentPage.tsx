@@ -194,14 +194,10 @@ export default function PaymentPage() {
 
   // Helper function to check if a specific payment type is completed
   const isPaymentCompleted = (productKey: string) => {
-    // Get the actual Stripe product ID for this product key
-    const product = STRIPE_PRODUCTS[productKey as keyof typeof STRIPE_PRODUCTS]
-    const stripeProductId = product?.id
-    
-    const isCompleted = completedOrders.some(order => order.product_id === stripeProductId)
+    // The webhook stores product keys (like 'SECURITY_DEPOSIT') not Stripe product IDs
+    const isCompleted = completedOrders.some(order => order.product_id === productKey)
     console.log(`🔍 Payment check for ${productKey}:`, {
       productKey,
-      stripeProductId,
       completedOrders: completedOrders.length,
       isCompleted,
       orders: completedOrders.map(o => ({ 
@@ -305,11 +301,9 @@ export default function PaymentPage() {
       const requiredProducts = ['SECURITY_DEPOSIT', 'DISASTERSHIELD_SERVICE_FEE', 'EMERGENCY_RESPONSE_FEE']
       const completedProductIds = completedOrders?.map(order => order.product_id) || []
       
-      const allRequiredCompleted = requiredProducts.every(productKey => {
-        const product = STRIPE_PRODUCTS[productKey as keyof typeof STRIPE_PRODUCTS]
-        const stripeProductId = product?.id
-        return completedProductIds.includes(stripeProductId)
-      })
+      const allRequiredCompleted = requiredProducts.every(productKey => 
+        completedProductIds.includes(productKey)
+      )
 
       // Update project payment status if all orders are completed
       if (allRequiredCompleted && project.payment_status !== 'paid') {

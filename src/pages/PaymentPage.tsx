@@ -107,13 +107,15 @@ export default function PaymentPage() {
 
         // Load user's order history for this project
         try {
-          if (project?.id) {
-            const orderHistory = await getUserOrders(project.id)
+          // Use projectData.id instead of project?.id since project state hasn't updated yet
+          if (projectData.id) {
+            const orderHistory = await getUserOrders(projectData.id)
             setOrders(orderHistory)
           }
           
           // Also load completed orders for payment status checking
-          if (user?.id && project?.id) {
+          // Use projectData.id instead of project?.id since project state hasn't updated yet
+          if (user?.id && projectData.id) {
             console.log('Loading completed orders for user:', user.id)
             
             const { data: customerData, error: customerError } = await supabase
@@ -137,7 +139,7 @@ export default function PaymentPage() {
             } else {
               console.log('🔍 Loading orders with filters:', {
                 customerId: customerData.customer_id,
-                projectId: project.id,
+                projectId: projectData.id,
                 status: 'completed'
               })
 
@@ -145,7 +147,7 @@ export default function PaymentPage() {
                 .from('stripe_orders')
                 .select('*')
                 .eq('customer_id', customerData.customer_id)
-                .eq('project_id', project.id)
+                .eq('project_id', projectData.id)
                 .eq('status', 'completed')
 
               console.log('📊 Order query result:', {
@@ -162,7 +164,8 @@ export default function PaymentPage() {
               })
 
               if (!ordersError) {
-                console.log('Loaded completed orders:', completedOrdersData)
+                console.log('✅ Loaded completed orders:', completedOrdersData)
+                console.log('📋 Setting completed orders state with:', completedOrdersData?.length || 0, 'orders')
                 setCompletedOrders(completedOrdersData || [])
               } else {
                 console.error('Error loading completed orders:', ordersError)
@@ -191,6 +194,20 @@ export default function PaymentPage() {
 
     loadData()
   }, [projectId, navigate, paymentStatus])
+
+  // Debug: Monitor completedOrders state changes
+  useEffect(() => {
+    console.log('🔄 completedOrders state changed:', {
+      count: completedOrders.length,
+      orders: completedOrders.map(o => ({
+        id: o.id,
+        product_id: o.product_id,
+        project_id: o.project_id,
+        status: o.status,
+        amount: o.amount_total
+      }))
+    })
+  }, [completedOrders])
 
   // Helper function to check if a specific payment type is completed
   const isPaymentCompleted = (productKey: string) => {

@@ -101,21 +101,8 @@ export default function SignupPage() {
       if (authData.user) {
         console.log('User created successfully, showing email confirmation')
         
-        // Create profile in profiles table
-        const { error: profileError } = await supabase
-          .from('profiles')
-          .insert({
-            id: authData.user.id,
-            role: validatedData.role,
-            full_name: validatedData.fullName,
-            phone: validatedData.phone,
-            email: validatedData.email
-          })
-        
-        if (profileError) {
-          console.error('Profile creation error:', profileError)
-          throw new Error('Failed to create user profile')
-        }
+        // Profile is automatically created by database trigger (handle_new_user)
+        // No need to manually create profile here
         
         // Show email confirmation prompt
         setUserEmail(validatedData.email)
@@ -164,7 +151,7 @@ export default function SignupPage() {
         <div className="max-w-md w-full">
           <div className="text-center mb-8">
             <div className="flex items-center justify-between mb-6">
-              <NotificationBell userId={currentUser?.id} />
+              <div></div>
               <Link to="/" className="flex items-center text-gray-600 hover:text-blue-600 transition-colors">
                 <ChevronLeft className="h-5 w-5 mr-1" />
                 <span className="text-sm font-medium">Back</span>

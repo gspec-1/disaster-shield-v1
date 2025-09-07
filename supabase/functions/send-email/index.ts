@@ -37,10 +37,27 @@ Deno.serve(async (req: Request) => {
   }
 
   try {
+    console.log('📧 Edge Function started:', {
+      timestamp: new Date().toISOString(),
+      method: req.method,
+      url: req.url
+    })
+
     const resendApiKey = Deno.env.get('RESEND_API_KEY') || Deno.env.get('VITE_RESEND_API_KEY')
     const resendFrom = Deno.env.get('RESEND_FROM') || Deno.env.get('VITE_RESEND_FROM')
     // Set to false to send real emails
     const mockMode = false
+    
+    // Add a test mode for debugging
+    const testMode = Deno.env.get('TEST_MODE') === 'true'
+    
+    console.log('📧 Environment check:', {
+      hasResendApiKey: !!resendApiKey,
+      hasResendFrom: !!resendFrom,
+      mockMode,
+      testMode,
+      apiKeyLength: resendApiKey?.length || 0
+    })
     
     // If mock mode is enabled, pretend to send emails without Resend API
     if (mockMode) {
@@ -51,6 +68,32 @@ Deno.serve(async (req: Request) => {
           id: `mock-${Date.now()}`,
           mock: true,
           message: 'Email mocked (not actually sent)' 
+        }),
+        { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+      )
+    }
+    
+    // If test mode is enabled, return detailed info without sending
+    if (testMode) {
+      const emailData: EmailRequest = await req.json()
+      console.log('TEST MODE: Email data analysis:', {
+        to: emailData.to,
+        subject: emailData.subject,
+        htmlLength: emailData.html?.length || 0,
+        hasFrom: !!emailData.from,
+        memoryUsage: Deno.memoryUsage ? Deno.memoryUsage() : 'Not available'
+      })
+      
+      return new Response(
+        JSON.stringify({ 
+          success: true, 
+          id: `test-${Date.now()}`,
+          test: true,
+          message: 'Email analyzed in test mode (not sent)',
+          analysis: {
+            htmlLength: emailData.html?.length || 0,
+            memoryUsage: Deno.memoryUsage ? Deno.memoryUsage() : 'Not available'
+          }
         }),
         { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
       )
@@ -83,9 +126,27 @@ Deno.serve(async (req: Request) => {
     }
 
     const emailData: EmailRequest = await req.json()
+    
+    console.log('📧 Email data received:', {
+      to: emailData.to,
+      subject: emailData.subject,
+      htmlLength: emailData.html?.length || 0,
+      hasFrom: !!emailData.from,
+      memoryUsage: Deno.memoryUsage ? Deno.memoryUsage() : 'Not available'
+    })
+    
+    // Check if HTML content is too large (potential memory issue)
+    if (emailData.html && emailData.html.length > 100000) {
+      console.warn('📧 Large HTML content detected:', emailData.html.length, 'characters')
+    }
 
     // Validate required fields
     if (!emailData.to || !emailData.subject || !emailData.html) {
+      console.error('📧 Validation failed:', {
+        hasTo: !!emailData.to,
+        hasSubject: !!emailData.subject,
+        hasHtml: !!emailData.html
+      })
       return new Response(
         JSON.stringify({ error: 'Missing required fields: to, subject, html' }),
         { 
@@ -117,47 +178,113 @@ Deno.serve(async (req: Request) => {
     }
     
     // Send email via Resend
-    const { data, error } = await resend.emails.send({
-      // Prefer explicit payload, then RESEND_FROM secret, then Resend onboarding sender
-      from: emailData.from || resendFrom,
-      to: [emailData.to],
-      subject: emailData.subject,
-      html: emailData.html,
-      text: emailData.text,
-    })
-
-    if (error) {
-      console.error('Resend API error:', error)
-      return new Response(
-        JSON.stringify({ error: 'Failed to send email', details: error }),
-        { 
-          status: 500, 
-          headers: { ...corsHeaders, 'Content-Type': 'application/json' } 
+    console.log('📧 Attempting to send email via Resend...')
+    
+    // Add retry logic for Resend API calls
+    let retryCount = 0
+    const maxRetries = 2
+    let lastError = null
+    
+    while (retryCount <= maxRetries) {
+      try {
+        console.log(`📧 Resend attempt ${retryCount + 1}/${maxRetries + 1}`)
+        
+        const { data, error } = await resend.emails.send({
+          // Prefer explicit payload, then RESEND_FROM secret, then Resend onboarding sender
+          from: emailData.from || resendFrom,
+          to: [emailData.to],
+          subject: emailData.subject,
+          html: emailData.html,
+          text: emailData.text,
+        })
+        
+        if (error) {
+          lastError = error
+          console.error(`📧 Resend API error (attempt ${retryCount + 1}):`, {
+            error,
+            errorType: typeof error,
+            errorMessage: error?.message,
+            errorCode: error?.code,
+            errorName: error?.name
+          })
+          
+          // If it's a rate limit error, wait before retrying
+          if (error?.code === 'rate_limit_exceeded' && retryCount < maxRetries) {
+            console.log('📧 Rate limit detected, waiting 3 seconds before retry...')
+            await new Promise(resolve => setTimeout(resolve, 3000))
+            retryCount++
+            continue
+          }
+          
+          // For other errors, don't retry
+          return new Response(
+            JSON.stringify({ error: 'Failed to send email', details: error }),
+            { 
+              status: 500, 
+              headers: { ...corsHeaders, 'Content-Type': 'application/json' } 
+            }
+          )
         }
-      )
-    }
-
-    console.log('Email sent successfully:', data)
-
-    return new Response(
-      JSON.stringify({ success: true, id: data?.id }),
-      { 
-        headers: { ...corsHeaders, 'Content-Type': 'application/json' } 
+        
+        // Success!
+        console.log('📧 Email sent successfully:', {
+          id: data?.id,
+          to: emailData.to,
+          subject: emailData.subject,
+          attempt: retryCount + 1
+        })
+        
+        return new Response(
+          JSON.stringify({ success: true, id: data?.id }),
+          { 
+            headers: { ...corsHeaders, 'Content-Type': 'application/json' } 
+          }
+        )
+        
+      } catch (retryError) {
+        lastError = retryError
+        console.error(`📧 Resend exception (attempt ${retryCount + 1}):`, retryError)
+        
+        if (retryCount < maxRetries) {
+          console.log('📧 Waiting 2 seconds before retry...')
+          await new Promise(resolve => setTimeout(resolve, 2000))
+          retryCount++
+          continue
+        }
+        
+        // Max retries reached
+        throw retryError
       }
-    )
+    }
+    
+    // This should never be reached, but just in case
+    throw lastError || new Error('Max retries exceeded')
 
   } catch (error) {
-    console.error('Email function error:', {
+    console.error('📧 Email function error:', {
       error: error instanceof Error ? error.message : error,
       stack: error instanceof Error ? error.stack : undefined,
-      timestamp: new Date().toISOString()
+      timestamp: new Date().toISOString(),
+      errorType: typeof error,
+      errorName: error instanceof Error ? error.name : 'Unknown'
     })
+    
+    // Check if it's a memory or timeout issue
+    if (error instanceof Error) {
+      if (error.message.includes('memory') || error.message.includes('timeout')) {
+        console.error('📧 Possible memory/timeout issue detected')
+      }
+      if (error.message.includes('fetch')) {
+        console.error('📧 Network/fetch issue detected')
+      }
+    }
     
     return new Response(
       JSON.stringify({ 
         error: 'Internal server error',
         details: error instanceof Error ? error.message : 'Unknown error',
-        timestamp: new Date().toISOString()
+        timestamp: new Date().toISOString(),
+        errorType: typeof error
       }),
       { 
         status: 500, 

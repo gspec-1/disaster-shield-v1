@@ -51,6 +51,9 @@ Deno.serve(async (req: Request) => {
     // Add a test mode for debugging
     const testMode = Deno.env.get('TEST_MODE') === 'true'
     
+    // Add a debug mode that shows more details about Resend API calls
+    const debugMode = Deno.env.get('DEBUG_MODE') === 'true'
+    
     // Add a simple mode that just returns success without doing anything
     const simpleMode = Deno.env.get('SIMPLE_MODE') === 'true'
     
@@ -59,6 +62,7 @@ Deno.serve(async (req: Request) => {
       hasResendFrom: !!resendFrom,
       mockMode,
       testMode,
+      debugMode,
       simpleMode,
       apiKeyLength: resendApiKey?.length || 0
     })
@@ -207,14 +211,27 @@ Deno.serve(async (req: Request) => {
       try {
         console.log(`📧 Resend attempt ${retryCount + 1}/${maxRetries + 1}`)
         
-        const { data, error } = await resend.emails.send({
+        const emailPayload = {
           // Prefer explicit payload, then RESEND_FROM secret, then Resend onboarding sender
           from: emailData.from || resendFrom,
           to: [emailData.to],
           subject: emailData.subject,
           html: emailData.html,
           text: emailData.text,
-        })
+        }
+        
+        if (debugMode) {
+          console.log('📧 DEBUG: Resend API payload:', {
+            from: emailPayload.from,
+            to: emailPayload.to,
+            subject: emailPayload.subject,
+            htmlLength: emailPayload.html?.length || 0,
+            hasText: !!emailPayload.text,
+            apiKeyPrefix: resendApiKey?.substring(0, 10) + '...'
+          })
+        }
+        
+        const { data, error } = await resend.emails.send(emailPayload)
         
         if (error) {
           lastError = error

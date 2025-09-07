@@ -21,6 +21,10 @@ import DeclineJobPage from './pages/DeclineJobPage'
 import PaymentPage from './pages/PaymentPage'
 import PaymentSuccessPage from './pages/PaymentSuccessPage'
 import PaymentDeclinedPage from './pages/PaymentDeclinedPage'
+import FNOLPage from './pages/fnol/FNOLPage'
+import AdminDashboard from './pages/admin/AdminDashboard'
+import InsuranceCompaniesPage from './pages/admin/InsuranceCompaniesPage'
+import AdminRoute from './components/AdminRoute'
 import NotFound from './pages/NotFound'
 
 function App() {
@@ -48,6 +52,17 @@ function App() {
         <Route path="/decline-job/:token" element={<DeclineJobPage />} />
         <Route path="/payment-success/:projectId" element={<PaymentSuccessPage />} />
         <Route path="/payment-declined/:projectId" element={<PaymentDeclinedPage />} />
+        <Route path="/fnol/:projectId" element={<FNOLPage />} />
+        <Route path="/admin" element={
+          <AdminRoute>
+            <AdminDashboard />
+          </AdminRoute>
+        } />
+        <Route path="/admin/insurance-companies" element={
+          <AdminRoute>
+            <InsuranceCompaniesPage />
+          </AdminRoute>
+        } />
         <Route path="*" element={<NotFound />} />
       </Routes>
       <Toaster />

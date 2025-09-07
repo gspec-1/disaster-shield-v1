@@ -19,6 +19,7 @@ export default function ClientDashboard() {
   const [projects, setProjects] = useState<Project[]>([])
   const [loading, setLoading] = useState(true)
   const [user, setUser] = useState<any>(null)
+  const [profile, setProfile] = useState<any>(null)
   const [deletingProject, setDeletingProject] = useState<string | null>(null)
 
   useEffect(() => {
@@ -48,6 +49,14 @@ export default function ClientDashboard() {
           console.error('Error fetching projects:', error)
           setProjects([])
         }
+
+        // Load user profile to check role
+        const { data: profileData } = await supabase
+          .from('profiles')
+          .select('role')
+          .eq('id', user.id)
+          .single()
+        setProfile(profileData)
       }
       setLoading(false)
     }
@@ -159,6 +168,13 @@ export default function ClientDashboard() {
             </Link>
             <div className="flex items-center space-x-4">
               <span className="text-sm text-gray-600">Welcome back!</span>
+              {profile?.role === 'admin' && (
+                <Link to="/admin">
+                  <Button variant="outline" size="sm">
+                    Admin Portal
+                  </Button>
+                </Link>
+              )}
               <NotificationBell />
               <SubscriptionStatus userId={user?.id} />
               <Button variant="outline" onClick={handleSignOut}>

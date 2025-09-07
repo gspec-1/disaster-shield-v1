@@ -735,7 +735,32 @@ export default function ProjectPortal() {
                       <p className="text-gray-600">{project.policy_number}</p>
                     </div>
                   )}
+                  {project.fnol_status && (
+                    <div>
+                      <p className="font-medium text-gray-900">FNOL Status</p>
+                      <div className="flex items-center gap-2">
+                        <Badge variant={
+                          project.fnol_status === 'acknowledged' ? 'default' :
+                          project.fnol_status === 'submitted' ? 'secondary' :
+                          project.fnol_status === 'failed' ? 'destructive' :
+                          'outline'
+                        }>
+                          {project.fnol_status.charAt(0).toUpperCase() + project.fnol_status.slice(1)}
+                        </Badge>
+                      </div>
+                    </div>
+                  )}
                 </CardContent>
+                <CardFooter>
+                  <div className="w-full flex justify-end">
+                    <Link to={`/fnol/${project.id}`}>
+                      <Button variant="outline" size="sm">
+                        <FileText className="h-4 w-4 mr-2" />
+                        {project.fnol_status === 'not_filed' ? 'Generate FNOL' : 'View FNOL'}
+                      </Button>
+                    </Link>
+                  </div>
+                </CardFooter>
               </Card>
             )}
 

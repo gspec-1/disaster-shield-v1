@@ -62,7 +62,12 @@ export default function AdminDashboard() {
 
       if (profileError || profile?.role !== 'admin') {
         toast.error('Access denied. Admin privileges required.')
-        navigate('/client/dashboard')
+        // Redirect to appropriate dashboard based on role
+        if (profile?.role === 'contractor') {
+          navigate('/contractor/dashboard')
+        } else {
+          navigate('/client/dashboard')
+        }
         return
       }
 

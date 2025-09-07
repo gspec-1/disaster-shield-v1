@@ -35,18 +35,29 @@ export default function AdminRoute({ children }: AdminRouteProps) {
 
       if (profileError) {
         console.error('Error fetching profile:', profileError)
-        navigate('/client/dashboard')
+        // Redirect to appropriate dashboard based on role
+        if (profile?.role === 'contractor') {
+          navigate('/contractor/dashboard')
+        } else {
+          navigate('/client/dashboard')
+        }
         return
       }
 
       if (profile?.role !== 'admin') {
-        navigate('/client/dashboard')
+        // Redirect to appropriate dashboard based on role
+        if (profile?.role === 'contractor') {
+          navigate('/contractor/dashboard')
+        } else {
+          navigate('/client/dashboard')
+        }
         return
       }
 
       setIsAdmin(true)
     } catch (error) {
       console.error('Admin access check error:', error)
+      // Default to client dashboard on error
       navigate('/client/dashboard')
     } finally {
       setLoading(false)

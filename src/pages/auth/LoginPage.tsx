@@ -52,7 +52,9 @@ export default function LoginPage() {
         }
 
         // Redirect based on role
-        if (userRole === 'contractor') {
+        if (userRole === 'admin') {
+          navigate('/admin')
+        } else if (userRole === 'contractor') {
           navigate('/contractor/dashboard')
         } else {
           navigate('/client/dashboard')

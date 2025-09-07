@@ -288,9 +288,13 @@ export default function IntakePage() {
         
         setProfile(profileData)
         
-        // Redirect contractors away from intake
+        // Redirect contractors and admins away from intake
         if (profileData?.role === 'contractor' || user.user_metadata?.role === 'contractor') {
           navigate('/contractor/dashboard')
+          return
+        }
+        if (profileData?.role === 'admin' || user.user_metadata?.role === 'admin') {
+          navigate('/admin')
           return
         }
       } catch (error) {
@@ -298,6 +302,10 @@ export default function IntakePage() {
         // If we can't get profile, check metadata
         if (user.user_metadata?.role === 'contractor') {
           navigate('/contractor/dashboard')
+          return
+        }
+        if (user.user_metadata?.role === 'admin') {
+          navigate('/admin')
           return
         }
       }

@@ -131,7 +131,11 @@ export default function HomePage() {
                   </span>
                   <NotificationBell />
                   <Link 
-                    to={profile?.role === 'contractor' || user.user_metadata?.role === 'contractor' ? '/contractor/dashboard' : '/client/dashboard'} 
+                    to={
+                      profile?.role === 'admin' || user.user_metadata?.role === 'admin' ? '/admin' :
+                      profile?.role === 'contractor' || user.user_metadata?.role === 'contractor' ? '/contractor/dashboard' : 
+                      '/client/dashboard'
+                    } 
                     className="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg transition-all duration-200 font-medium shadow-sm hover:shadow-md"
                   >
                     Dashboard
@@ -186,7 +190,7 @@ export default function HomePage() {
               generates professional claim packets, and gets repairs started fast.
             </p>
             <div className="flex flex-col sm:flex-row gap-4 justify-center">
-              {user && profile?.role !== 'contractor' ? (
+              {user && profile?.role !== 'contractor' && profile?.role !== 'admin' ? (
                 <Link to="/intake">
                   <Button size="lg" className="text-lg px-8 py-4 bg-orange-500 hover:bg-orange-600 text-white border-0 shadow-lg hover:shadow-xl transition-all duration-300 transform hover:scale-105">
                     Start My Claim
@@ -291,7 +295,7 @@ export default function HomePage() {
             Join thousands of homeowners who've streamlined their insurance claims with DisasterShield
           </p>
           <div className="flex flex-col sm:flex-row gap-4 justify-center">
-            {user && profile?.role !== 'contractor' ? (
+            {user && profile?.role !== 'contractor' && profile?.role !== 'admin' ? (
               <Link to="/intake">
                 <Button size="lg" className="text-lg px-10 py-4 bg-orange-500 hover:bg-orange-600 text-white border-0 shadow-lg hover:shadow-xl transition-all duration-300 transform hover:scale-105">
                   Start My Claim Now
@@ -305,6 +309,17 @@ export default function HomePage() {
                   <ArrowRight className="ml-2 h-5 w-5" />
                 </Button>
               </Link>
+            ) : user && (profile?.role === 'admin' || user.user_metadata?.role === 'admin') ? (
+              <div className="text-center">
+                <p className="text-blue-100 text-lg">
+                  Admin users can access the admin portal
+                </p>
+                <Link to="/admin">
+                  <Button size="lg" variant="outline" className="mt-4 text-lg px-10 py-4 border-2 border-white/80 text-white bg-white/10 hover:bg-white hover:text-blue-700 transition-all duration-300">
+                    Go to Admin Portal
+                  </Button>
+                </Link>
+              </div>
             ) : (
               <div className="text-center">
                 <p className="text-blue-100 text-lg">

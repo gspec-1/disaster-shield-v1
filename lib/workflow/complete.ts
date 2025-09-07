@@ -201,7 +201,7 @@ export async function executeCompleteWorkflow(params: CompleteWorkflowParams): P
           baseUrl: params.baseUrl || 'not provided'
         });
 
-        // Send email invitation
+        // Send email invitation with delay to prevent rate limiting
         const emailSent = await resendEmailService.sendContractorInvitation({
           contractorEmail: c.email,
           contractorName: c.contact_name || c.contactName || c.name,
@@ -225,9 +225,17 @@ export async function executeCompleteWorkflow(params: CompleteWorkflowParams): P
 
         if (emailSent) {
           emailsSent++
+          console.log(`✅ Email sent successfully to ${c.email}`)
         } else {
+          console.error(`❌ Failed to send email to ${c.email}`)
           // Silently collect error but don't fail the whole process
           errors.push(`Note: Email not sent to ${c.email || 'unknown'} - email service issue`)
+        }
+        
+        // Add delay between emails to prevent rate limiting (except for the last email)
+        if (emailAttempts < topContractors.length) {
+          console.log(`⏳ Waiting 2 seconds before sending next email...`)
+          await new Promise(resolve => setTimeout(resolve, 2000))
         }
       } catch (error) {
         // Collect error but don't fail the whole process

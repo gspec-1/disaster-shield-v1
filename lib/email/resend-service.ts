@@ -110,13 +110,26 @@ export class ResendEmailService {
       const responseData = await response.json()
 
       if (!response.ok) {
-        console.error('Email sending failed:', responseData)
+        console.error('Email sending failed:', {
+          status: response.status,
+          statusText: response.statusText,
+          responseData,
+          emailTo: emailData.to,
+          emailSubject: emailData.subject
+        })
         
         // If the error is that the service isn't configured, log more helpful message
         if (responseData?.error === 'Email service not configured') {
           console.warn('VITE_RESEND_API_KEY is not configured in Supabase Edge Functions. ' +
             'Configure it at Supabase Dashboard > Edge Functions > send-email > Environment Variables ' +
             'or set MOCK_EMAIL_SERVICE=true in the Edge Function environment')
+        }
+        
+        // Check for rate limiting or server errors
+        if (response.status === 429) {
+          console.error('📧 Rate limit exceeded - too many emails sent too quickly')
+        } else if (response.status >= 500) {
+          console.error('📧 Server error - Edge Function may be having issues')
         }
         
         // In development mode, don't fail the app due to email issues

@@ -22,6 +22,7 @@ export default function BrowseJobs() {
   const [searchTerm, setSearchTerm] = useState('')
   const [selectedPeril, setSelectedPeril] = useState('all')
   const [selectedState, setSelectedState] = useState('all')
+  const [showAllJobs, setShowAllJobs] = useState(false)
   const [existingMatchRequests, setExistingMatchRequests] = useState<string[]>([])
 
   const perilOptions = [
@@ -70,11 +71,12 @@ export default function BrowseJobs() {
 
       try {
         // Get available projects (not assigned to anyone yet)
+        // Show projects that are available for contractor matching
         const { data, error } = await supabase
           .from('projects')
           .select('*')
           .is('assigned_contractor_id', null)
-          .in('status', ['submitted', 'matched'])
+          .in('status', ['submitted', 'matched', 'scheduled'])
           .order('created_at', { ascending: false })
 
         console.log('Raw projects from database:', data)
@@ -125,10 +127,14 @@ export default function BrowseJobs() {
       console.log('After state filter:', filtered.length)
     }
 
-    // Filter by contractor's service areas and trades
-    if (contractor) {
-      console.log('Contractor service areas:', contractor.service_areas)
-      console.log('Contractor trades:', contractor.trades)
+    // Filter by contractor's service areas and trades (unless "Show All Jobs" is enabled)
+    if (contractor && !showAllJobs) {
+      console.log('🔍 Contractor filtering debug:', {
+        contractorId: contractor.id,
+        serviceAreas: contractor.service_areas,
+        trades: contractor.trades,
+        projectsBeforeFilter: filtered.length
+      })
       
       filtered = filtered.filter(project => {
         // Check if contractor serves the project's state or city
@@ -142,28 +148,45 @@ export default function BrowseJobs() {
         // Check if contractor has relevant trades
         const contractorTrades = contractor.trades || []
         const perilTradeMap: Record<string, string[]> = {
-          flood: ['water_mitigation', 'rebuild'],
-          water: ['water_mitigation', 'mold'],
-          wind: ['rebuild', 'roofing'],
-          fire: ['rebuild', 'smoke_restoration'],
-          mold: ['mold', 'water_mitigation'],
-          other: ['rebuild'],
+          flood: ['water_mitigation', 'rebuild', 'general'],
+          water: ['water_mitigation', 'mold', 'general'],
+          wind: ['rebuild', 'roofing', 'general'],
+          fire: ['rebuild', 'smoke_restoration', 'general'],
+          mold: ['mold', 'water_mitigation', 'general'],
+          other: ['rebuild', 'general'],
         }
         
-        const relevantTrades = perilTradeMap[project.peril] || ['rebuild']
+        const relevantTrades = perilTradeMap[project.peril] || ['rebuild', 'general']
         const hasRelevantTrade = contractorTrades.some(trade => 
           relevantTrades.includes(trade)
         )
         
-        // Show project if contractor serves the area OR has relevant trade
-        // (being more permissive to show more opportunities)
-        return servesArea || hasRelevantTrade
+        // If contractor has no service areas or trades defined, show all projects
+        // This helps new contractors see all available jobs
+        const hasNoRestrictions = contractorAreas.length === 0 && contractorTrades.length === 0
+        
+        // Show project if:
+        // 1. Contractor has no restrictions (new contractor), OR
+        // 2. Contractor serves the area, OR  
+        // 3. Contractor has relevant trade
+        const shouldShow = hasNoRestrictions || servesArea || hasRelevantTrade
+        
+        console.log(`📋 Project ${project.id} (${project.peril} in ${project.city}, ${project.state}):`, {
+          servesArea,
+          hasRelevantTrade,
+          hasNoRestrictions,
+          shouldShow,
+          relevantTrades,
+          contractorTrades
+        })
+        
+        return shouldShow
       })
-      console.log('After contractor filtering:', filtered.length)
+      console.log('✅ After contractor filtering:', filtered.length, 'projects remain')
     }
 
     setFilteredProjects(filtered)
-  }, [projects, searchTerm, selectedPeril, selectedState, contractor])
+  }, [projects, searchTerm, selectedPeril, selectedState, contractor, showAllJobs])
 
   const handleExpressInterest = async (projectId: string) => {
     if (!contractor) return
@@ -301,7 +324,7 @@ export default function BrowseJobs() {
             </CardTitle>
           </CardHeader>
           <CardContent>
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+            <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-2">
                   Search Location
@@ -348,6 +371,23 @@ export default function BrowseJobs() {
                   </SelectContent>
                 </Select>
               </div>
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-2">
+                  Job Filtering
+                </label>
+                <div className="flex items-center space-x-2">
+                  <input
+                    type="checkbox"
+                    id="showAllJobs"
+                    checked={showAllJobs}
+                    onChange={(e) => setShowAllJobs(e.target.checked)}
+                    className="rounded border-gray-300 text-blue-600 focus:ring-blue-500"
+                  />
+                  <label htmlFor="showAllJobs" className="text-sm text-gray-700">
+                    Show all jobs (ignore service areas)
+                  </label>
+                </div>
+              </div>
             </div>
           </CardContent>
         </Card>
@@ -375,6 +415,7 @@ export default function BrowseJobs() {
                   setSearchTerm('')
                   setSelectedPeril('all')
                   setSelectedState('all')
+                  setShowAllJobs(false)
                 }}>
                   Clear Filters
                 </Button>

@@ -51,11 +51,15 @@ Deno.serve(async (req: Request) => {
     // Add a test mode for debugging
     const testMode = Deno.env.get('TEST_MODE') === 'true'
     
+    // Add a simple mode that just returns success without doing anything
+    const simpleMode = Deno.env.get('SIMPLE_MODE') === 'true'
+    
     console.log('📧 Environment check:', {
       hasResendApiKey: !!resendApiKey,
       hasResendFrom: !!resendFrom,
       mockMode,
       testMode,
+      simpleMode,
       apiKeyLength: resendApiKey?.length || 0
     })
     
@@ -94,6 +98,20 @@ Deno.serve(async (req: Request) => {
             htmlLength: emailData.html?.length || 0,
             memoryUsage: Deno.memoryUsage ? Deno.memoryUsage() : 'Not available'
           }
+        }),
+        { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+      )
+    }
+    
+    // If simple mode is enabled, just return success without any processing
+    if (simpleMode) {
+      console.log('📧 SIMPLE MODE: Returning success without processing')
+      return new Response(
+        JSON.stringify({ 
+          success: true, 
+          id: `simple-${Date.now()}`,
+          simple: true,
+          message: 'Email processed in simple mode (no actual sending)'
         }),
         { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
       )

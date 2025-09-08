@@ -592,7 +592,7 @@ export default function PaymentPage() {
               </CardContent>
             </Card>
 
-            {/* Order History */}
+            {/* Order History
             {orders.length > 0 && (
               <Card className="shadow-lg mt-6">
                 <CardHeader>
@@ -625,7 +625,7 @@ export default function PaymentPage() {
                   </div>
                 </CardContent>
               </Card>
-            )}
+            )} */}
           </div>
 
           {/* Project Summary */}

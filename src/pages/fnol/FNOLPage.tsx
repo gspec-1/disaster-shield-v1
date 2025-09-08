@@ -317,6 +317,12 @@ export default function FNOLPage() {
   const submitFNOL = async () => {
     if (!existingFNOL) return
 
+    // Check if FNOL Generation Fee has been paid
+    if (!isFNOLPaymentCompleted()) {
+      toast.error('Please complete the FNOL Generation Fee payment before submitting.')
+      return
+    }
+
     setSubmitting(true)
     try {
       // Update FNOL record status
@@ -350,7 +356,13 @@ export default function FNOLPage() {
 
   // Check if FNOL Generation Fee has been paid
   const isFNOLPaymentCompleted = () => {
-    return completedOrders.some(order => order.product_id === 'FNOL_GENERATION_FEE')
+    const isCompleted = completedOrders.some(order => order.product_id === 'FNOL_GENERATION_FEE')
+    console.log('FNOL Payment Check:', {
+      completedOrders: completedOrders.length,
+      orders: completedOrders.map(o => ({ product_id: o.product_id, status: o.status })),
+      isCompleted
+    })
+    return isCompleted
   }
 
   // Handle FNOL Generation Fee payment
@@ -385,6 +397,12 @@ export default function FNOLPage() {
     try {
       const orders = await getUserOrders(project.id)
       const completed = orders.filter(order => order.status === 'completed')
+      console.log('Loading completed orders:', {
+        projectId: project.id,
+        allOrders: orders.length,
+        completedOrders: completed.length,
+        orders: orders.map(o => ({ product_id: o.product_id, status: o.status }))
+      })
       setCompletedOrders(completed)
     } catch (error) {
       console.error('Error loading completed orders:', error)

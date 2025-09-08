@@ -717,52 +717,57 @@ export default function ProjectPortal() {
             </Card>
 
             {/* Insurance Information */}
-            {(project.carrier_name || project.policy_number) && (
-              <Card className="shadow-lg">
-                <CardHeader>
-                  <CardTitle>Insurance Information</CardTitle>
-                </CardHeader>
-                <CardContent className="space-y-3">
-                  {project.carrier_name && (
+            <Card className="shadow-lg">
+              <CardHeader>
+                <CardTitle>Insurance Information</CardTitle>
+              </CardHeader>
+              <CardContent className="space-y-3">
+                {project.carrier_name ? (
+                  <>
                     <div>
                       <p className="font-medium text-gray-900">Carrier</p>
                       <p className="text-gray-600">{project.carrier_name}</p>
                     </div>
-                  )}
-                  {project.policy_number && (
-                    <div>
-                      <p className="font-medium text-gray-900">Policy Number</p>
-                      <p className="text-gray-600">{project.policy_number}</p>
-                    </div>
-                  )}
-                  {project.fnol_status && (
-                    <div>
-                      <p className="font-medium text-gray-900">FNOL Status</p>
-                      <div className="flex items-center gap-2">
-                        <Badge variant={
-                          project.fnol_status === 'acknowledged' ? 'default' :
-                          project.fnol_status === 'submitted' ? 'secondary' :
-                          project.fnol_status === 'failed' ? 'destructive' :
-                          'outline'
-                        }>
-                          {project.fnol_status.charAt(0).toUpperCase() + project.fnol_status.slice(1)}
-                        </Badge>
+                    {project.policy_number && (
+                      <div>
+                        <p className="font-medium text-gray-900">Policy Number</p>
+                        <p className="text-gray-600">{project.policy_number}</p>
                       </div>
-                    </div>
-                  )}
-                </CardContent>
-                <CardFooter>
-                  <div className="w-full flex justify-end">
-                    <Link to={`/fnol/${project.id}`}>
-                      <Button variant="outline" size="sm">
-                        <FileText className="h-4 w-4 mr-2" />
-                        {project.fnol_status === 'not_filed' ? 'Generate FNOL' : 'View FNOL'}
-                      </Button>
-                    </Link>
+                    )}
+                    {project.fnol_status && (
+                      <div>
+                        <p className="font-medium text-gray-900">FNOL Status</p>
+                        <div className="flex items-center gap-2">
+                          <Badge variant={
+                            project.fnol_status === 'acknowledged' ? 'default' :
+                            project.fnol_status === 'submitted' ? 'secondary' :
+                            project.fnol_status === 'failed' ? 'destructive' :
+                            'outline'
+                          }>
+                            {project.fnol_status.charAt(0).toUpperCase() + project.fnol_status.slice(1)}
+                          </Badge>
+                        </div>
+                      </div>
+                    )}
+                  </>
+                ) : (
+                  <div className="text-center py-4">
+                    <p className="text-gray-500 mb-2">No insurance information provided</p>
+                    <p className="text-sm text-gray-400">You can still generate an FNOL document</p>
                   </div>
-                </CardFooter>
-              </Card>
-            )}
+                )}
+              </CardContent>
+              <CardFooter>
+                <div className="w-full flex justify-end">
+                  <Link to={`/fnol/${project.id}`}>
+                    <Button variant="outline" size="sm">
+                      <FileText className="h-4 w-4 mr-2" />
+                      {project.fnol_status === 'not_filed' ? 'Generate FNOL' : 'View FNOL'}
+                    </Button>
+                  </Link>
+                </div>
+              </CardFooter>
+            </Card>
 
             {/* Status Timeline - Only shown to homeowners, not contractors */}
             {!isContractor && (

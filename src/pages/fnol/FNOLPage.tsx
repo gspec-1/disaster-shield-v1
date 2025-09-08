@@ -159,6 +159,21 @@ export default function FNOLPage() {
           loss_date: projectData.incident_at ? projectData.incident_at.split('T')[0] : '',
           areas_affected: projectData.description || ''
         }))
+
+        // Auto-select insurance company if carrier name matches
+        if (projectData.carrier_name && companiesData) {
+          const matchingCompany = companiesData.find(company => 
+            company.name.toLowerCase() === projectData.carrier_name.toLowerCase()
+          )
+          if (matchingCompany) {
+            setSelectedCompany(matchingCompany)
+            setFormData(prev => ({
+              ...prev,
+              insurance_company_id: matchingCompany.id,
+              submission_method: matchingCompany.submission_method
+            }))
+          }
+        }
       }
 
     } catch (error) {

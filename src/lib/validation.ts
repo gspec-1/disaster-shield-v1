@@ -33,6 +33,7 @@ export const IntakeSchema = z.object({
   insurance: z.object({
     willFile: z.enum(['yes', 'no', 'unsure']),
     carrierName: z.string().optional(),
+    customCarrierName: z.string().optional(), // Custom carrier name when "Other" is selected
     policyNumber: z.string().optional(),
     deductibleCents: z.number().optional(),
   }),

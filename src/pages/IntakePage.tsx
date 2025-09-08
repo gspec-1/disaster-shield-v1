@@ -24,6 +24,7 @@ export default function IntakePage() {
   const [user, setUser] = useState<any>(null)
   const [profile, setProfile] = useState<any>(null)
   const [loading, setLoading] = useState(true)
+  const [insuranceCompanies, setInsuranceCompanies] = useState<any[]>([])
   
   // Media upload states
   const [uploadingFiles, setUploadingFiles] = useState(false)
@@ -254,6 +255,7 @@ export default function IntakePage() {
     insurance: {
       willFile: 'yes',
       carrierName: '',
+      customCarrierName: '',
       policyNumber: '',
     },
     schedule: {
@@ -287,6 +289,14 @@ export default function IntakePage() {
           .maybeSingle()
         
         setProfile(profileData)
+
+        // Load insurance companies
+        const { data: companiesData } = await supabase
+          .from('insurance_companies')
+          .select('id, name, is_active')
+          .eq('is_active', true)
+          .order('name')
+        setInsuranceCompanies(companiesData || [])
         
         // Redirect contractors and admins away from intake
         if (profileData?.role === 'contractor' || user.user_metadata?.role === 'contractor') {
@@ -375,7 +385,9 @@ export default function IntakePage() {
           peril: validatedData.incident.peril,
           incident_at: validatedData.incident.incidentAt,
           description: validatedData.incident.description,
-          carrier_name: validatedData.insurance.carrierName || null,
+          carrier_name: validatedData.insurance.carrierName === 'Other' 
+            ? validatedData.insurance.customCarrierName || null
+            : validatedData.insurance.carrierName || null,
           policy_number: validatedData.insurance.policyNumber || null,
           preferred_date: validatedData.schedule.preferredDateISO,
           preferred_window: validatedData.schedule.preferredWindow,
@@ -1155,14 +1167,35 @@ export default function IntakePage() {
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                     <div>
                       <label className="block text-sm font-medium mb-2">Insurance Carrier</label>
-                      <Input
+                      <Select
                         value={formData.insurance?.carrierName || ''}
-                        onChange={(e) => setFormData({
+                        onValueChange={(value) => setFormData({
                           ...formData,
-                          insurance: { ...formData.insurance!, carrierName: e.target.value }
+                          insurance: { ...formData.insurance!, carrierName: value }
                         })}
-                        placeholder="State Farm, Allstate, etc."
-                      />
+                      >
+                        <SelectTrigger>
+                          <SelectValue placeholder="Select your insurance company" />
+                        </SelectTrigger>
+                        <SelectContent>
+                          {insuranceCompanies.map((company) => (
+                            <SelectItem key={company.id} value={company.name}>
+                              {company.name}
+                            </SelectItem>
+                          ))}
+                          <SelectItem value="Other">Other (specify below)</SelectItem>
+                        </SelectContent>
+                      </Select>
+                      {formData.insurance?.carrierName === 'Other' && (
+                        <Input
+                          className="mt-2"
+                          placeholder="Enter your insurance company name"
+                          onChange={(e) => setFormData({
+                            ...formData,
+                            insurance: { ...formData.insurance!, customCarrierName: e.target.value }
+                          })}
+                        />
+                      )}
                     </div>
                     <div>
                       <label className="block text-sm font-medium mb-2">Policy Number</label>

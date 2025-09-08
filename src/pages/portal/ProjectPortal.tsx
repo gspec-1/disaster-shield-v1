@@ -828,7 +828,7 @@ export default function ProjectPortal() {
                     }),
                     <div className="flex items-center gap-3">
                       <div className={`w-3 h-3 rounded-full ${
-                        completedOrders.length === 3
+                        completedOrders.length === 4
                           ? 'bg-green-500' 
                           : completedOrders.length > 0
                           ? 'bg-yellow-500'
@@ -838,14 +838,14 @@ export default function ProjectPortal() {
                         <div className="flex items-center justify-between">
                       <div>
                             <p className="font-medium text-gray-900">
-                              {completedOrders.length === 3 ? 'Payment Completed' : 
+                              {completedOrders.length === 4 ? 'Payment Completed' : 
                                completedOrders.length > 0 ? 'Payment In Progress' : 'Payment Required'}
                             </p>
                             <p className="text-sm text-gray-600">
-                              {completedOrders.length === 3
+                              {completedOrders.length === 4
                                 ? 'All payments completed' 
                                 : completedOrders.length > 0 
-                                ? `${completedOrders.length} of 3 payments completed`
+                                ? `${completedOrders.length} of 4 payments completed`
                                 : 'Complete payment to begin work'
                               }
                             </p>

@@ -183,6 +183,14 @@ export default function PaymentPage() {
     return areAllRequiredPaymentsCompleted(completedOrders)
   }
 
+  // Helper function to get completed required payments count
+  const getCompletedRequiredPaymentsCount = () => {
+    const requiredProducts = PAYMENT_GROUPS.CORE_PROJECT.products
+    return requiredProducts.filter(productKey => 
+      isPaymentCompleted(productKey, completedOrders)
+    ).length
+  }
+
   // Debug function to help troubleshoot payment detection
   const debugPaymentState = () => {
     console.log('🐛 Payment State:', {
@@ -263,9 +271,9 @@ export default function PaymentPage() {
       } else if (allRequiredCompleted) {
         toast.success('✅ All payments are already completed!', { id: 'payment-check' })
       } else {
-        const completedCount = completedOrders?.length || 0
+        const completedRequiredCount = getCompletedRequiredPaymentsCount()
         const requiredCount = PAYMENT_GROUPS.CORE_PROJECT.products.length
-        toast.info(`📊 ${completedCount} of ${requiredCount} required payments completed. ${requiredCount - completedCount} payments remaining.`, { id: 'payment-check' })
+        toast.info(`📊 ${completedRequiredCount} of ${requiredCount} required payments completed. ${requiredCount - completedRequiredCount} payments remaining.`, { id: 'payment-check' })
       }
     } catch (error) {
       console.error('Error checking payment status:', error)
@@ -698,13 +706,17 @@ export default function PaymentPage() {
                   <Badge className={`border-0 ${
                     areAllPaymentsCompleted() 
                       ? 'bg-green-100 text-green-800' 
-                      : completedOrders.length > 0
+                      : getCompletedRequiredPaymentsCount() > 0
                       ? 'bg-blue-100 text-blue-800'
                       : 'bg-yellow-100 text-yellow-800'
                   }`}>
                     {areAllPaymentsCompleted() ? 'Paid' : 
-                     completedOrders.length > 0 ? 'Partially Paid' : 'Unpaid'}
+                     getCompletedRequiredPaymentsCount() > 0 ? 'Partially Paid' : 'Unpaid'}
                   </Badge>
+                  <p className="text-sm text-gray-600 mt-1">
+                    Required: {getCompletedRequiredPaymentsCount()}/{PAYMENT_GROUPS.CORE_PROJECT.products.length} | 
+                    Total: {completedOrders.length} payments completed
+                  </p>
                 </div>
 
                 {areAllPaymentsCompleted() && (

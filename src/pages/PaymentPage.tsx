@@ -671,10 +671,10 @@ export default function PaymentPage() {
                     {areAllPaymentsCompleted() ? 'Paid' : 
                      getCompletedRequiredPaymentsCount() > 0 ? 'Partially Paid' : 'Unpaid'}
                   </Badge>
-                  <p className="text-sm text-gray-600 mt-1">
+                  {/* <p className="text-sm text-gray-600 mt-1">
                     Required: {getCompletedRequiredPaymentsCount()}/{PAYMENT_GROUPS.CORE_PROJECT.products.length} | 
                     Total: {completedOrders.length} payments completed
-                  </p>
+                  </p> */}
                 </div>
 
                 {areAllPaymentsCompleted() && (

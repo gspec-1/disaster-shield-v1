@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react'
-import { useParams, useNavigate, Link } from 'react-router-dom'
+import { useParams, useNavigate, Link, useSearchParams } from 'react-router-dom'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Input } from '@/components/ui/input'
@@ -18,9 +18,12 @@ import {
   ChevronLeft,
   Shield,
   ExternalLink,
-  Upload
+  Upload,
+  CreditCard
 } from 'lucide-react'
 import { supabase } from '@/src/lib/supabase'
+import { createCheckoutSession, redirectToCheckout, getUserOrders } from '@/src/lib/stripe'
+import { STRIPE_PRODUCTS, formatPrice } from '@/src/stripe-config'
 import { toast } from 'sonner'
 
 interface Project {
@@ -88,12 +91,16 @@ interface FNOLFormData {
 export default function FNOLPage() {
   const { projectId } = useParams<{ projectId: string }>()
   const navigate = useNavigate()
+  const [searchParams] = useSearchParams()
+  const paymentStatus = searchParams.get('payment')
   const [project, setProject] = useState<Project | null>(null)
   const [insuranceCompanies, setInsuranceCompanies] = useState<InsuranceCompany[]>([])
   const [existingFNOL, setExistingFNOL] = useState<FNOLRecord | null>(null)
   const [loading, setLoading] = useState(true)
   const [submitting, setSubmitting] = useState(false)
   const [selectedCompany, setSelectedCompany] = useState<InsuranceCompany | null>(null)
+  const [completedOrders, setCompletedOrders] = useState<any[]>([])
+  const [checkingPayment, setCheckingPayment] = useState(false)
   
   const [formData, setFormData] = useState<FNOLFormData>({
     insurance_company_id: '',
@@ -116,6 +123,19 @@ export default function FNOLPage() {
   useEffect(() => {
     loadData()
   }, [projectId])
+
+  // Handle payment success/cancellation
+  useEffect(() => {
+    if (paymentStatus === 'success') {
+      toast.success('Payment successful! You can now submit your FNOL.')
+      // Reload completed orders to update payment status
+      if (project) {
+        loadCompletedOrders()
+      }
+    } else if (paymentStatus === 'cancelled') {
+      toast.error('Payment was cancelled. Please try again if you want to submit your FNOL.')
+    }
+  }, [paymentStatus, project])
 
   const loadData = async () => {
     try {
@@ -182,6 +202,8 @@ export default function FNOLPage() {
       console.error('Error loading data:', error)
       toast.error('Failed to load project data')
     } finally {
+      // Load completed orders for payment checking
+      await loadCompletedOrders()
       setLoading(false)
     }
   }
@@ -326,6 +348,49 @@ export default function FNOLPage() {
     }
   }
 
+  // Check if FNOL Generation Fee has been paid
+  const isFNOLPaymentCompleted = () => {
+    return completedOrders.some(order => order.product_id === 'FNOL_GENERATION_FEE')
+  }
+
+  // Handle FNOL Generation Fee payment
+  const handleFNOLPayment = async () => {
+    if (!project) return
+
+    setCheckingPayment(true)
+    try {
+      const successUrl = `${window.location.origin}/fnol/${project.id}?payment=success`
+      const cancelUrl = `${window.location.origin}/fnol/${project.id}?payment=cancelled`
+
+      const { url } = await createCheckoutSession({
+        productKey: 'FNOL_GENERATION_FEE',
+        successUrl,
+        cancelUrl,
+        projectId: project.id
+      })
+
+      await redirectToCheckout(url)
+    } catch (error) {
+      console.error('Error creating checkout session:', error)
+      toast.error('Failed to initiate payment')
+    } finally {
+      setCheckingPayment(false)
+    }
+  }
+
+  // Load completed orders for payment checking
+  const loadCompletedOrders = async () => {
+    if (!project) return
+
+    try {
+      const orders = await getUserOrders(project.id)
+      const completed = orders.filter(order => order.status === 'completed')
+      setCompletedOrders(completed)
+    } catch (error) {
+      console.error('Error loading completed orders:', error)
+    }
+  }
+
   const getStatusBadge = (status: string) => {
     const statusConfig = {
       pending: { color: 'bg-yellow-100 text-yellow-800', icon: Clock },
@@ -459,12 +524,33 @@ export default function FNOLPage() {
                       {existingFNOL.fnol_number && (
                         <p className="text-sm text-gray-600">Claim Number: {existingFNOL.fnol_number}</p>
                       )}
+                      <p className="text-sm text-gray-600">
+                        FNOL Generation Fee: {isFNOLPaymentCompleted() ? (
+                          <span className="text-green-600 font-medium">✓ Paid</span>
+                        ) : (
+                          <span className="text-red-600 font-medium">✗ Not Paid</span>
+                        )}
+                      </p>
                     </div>
                     <div className="flex gap-2">
                       {existingFNOL.status === 'pending' && (
-                        <Button onClick={submitFNOL} disabled={submitting}>
-                          {submitting ? 'Submitting...' : 'Submit FNOL'}
-                        </Button>
+                        <>
+                          {!isFNOLPaymentCompleted() ? (
+                            <Button 
+                              onClick={handleFNOLPayment} 
+                              disabled={checkingPayment}
+                              className="bg-green-600 hover:bg-green-700"
+                            >
+                              <CreditCard className="h-4 w-4 mr-2" />
+                              {checkingPayment ? 'Processing...' : `Pay ${formatPrice(STRIPE_PRODUCTS.FNOL_GENERATION_FEE.amount)} - FNOL Generation Fee`}
+                            </Button>
+                          ) : (
+                            <Button onClick={submitFNOL} disabled={submitting}>
+                              <Upload className="h-4 w-4 mr-2" />
+                              {submitting ? 'Submitting...' : 'Submit FNOL'}
+                            </Button>
+                          )}
+                        </>
                       )}
                       {existingFNOL.fnol_document_url && (
                         <Button variant="outline" asChild>

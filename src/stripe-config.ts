@@ -25,6 +25,14 @@ export const STRIPE_PRODUCTS = {
     mode: 'payment' as const,
     amount: 14900, // $149.00 in cents
   },
+  FNOL_GENERATION_FEE: {
+    id: 'prod_T19oCXAy5c5fHQ',
+    priceId: 'price_1S57UuGYzYF1t9Adw8Ktj3IY', // FNOL Generation Fee price ID
+    name: 'FNOL Generation Fee',
+    description: 'Creating and approving the First Notice of Loss document',
+    mode: 'payment' as const,
+    amount: 10000, // $100.00 in cents
+  },
 }
 
 console.log('Using Stripe TEST products with price IDs:', Object.values(STRIPE_PRODUCTS).map(p => p.priceId))

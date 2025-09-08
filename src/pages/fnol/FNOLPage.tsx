@@ -124,18 +124,41 @@ export default function FNOLPage() {
     loadData()
   }, [projectId])
 
+  // Load completed orders when project is available
+  useEffect(() => {
+    if (project) {
+      loadCompletedOrders()
+    }
+  }, [project])
+
   // Handle payment success/cancellation
   useEffect(() => {
     if (paymentStatus === 'success') {
       toast.success('Payment successful! You can now submit your FNOL.')
-      // Reload completed orders to update payment status
+      // Reload completed orders to update payment status with a delay
       if (project) {
-        loadCompletedOrders()
+        setTimeout(() => {
+          loadCompletedOrders()
+        }, 1000) // Wait 1 second for webhook to process
       }
     } else if (paymentStatus === 'cancelled') {
       toast.error('Payment was cancelled. Please try again if you want to submit your FNOL.')
     }
   }, [paymentStatus, project])
+
+  // Periodic refresh of payment status (every 30 seconds) when payment is pending
+  useEffect(() => {
+    if (!project || !existingFNOL || existingFNOL.status !== 'pending') return
+
+    const interval = setInterval(() => {
+      if (!isFNOLPaymentCompleted()) {
+        console.log('🔄 Auto-refreshing payment status...')
+        loadCompletedOrders()
+      }
+    }, 30000) // Check every 30 seconds
+
+    return () => clearInterval(interval)
+  }, [project, existingFNOL])
 
   const loadData = async () => {
     try {
@@ -202,8 +225,6 @@ export default function FNOLPage() {
       console.error('Error loading data:', error)
       toast.error('Failed to load project data')
     } finally {
-      // Load completed orders for payment checking
-      await loadCompletedOrders()
       setLoading(false)
     }
   }
@@ -395,17 +416,26 @@ export default function FNOLPage() {
     if (!project) return
 
     try {
+      console.log('🔄 Loading completed orders for project:', project.id)
       const orders = await getUserOrders(project.id)
       const completed = orders.filter(order => order.status === 'completed')
-      console.log('Loading completed orders:', {
+      console.log('📊 Completed orders loaded:', {
         projectId: project.id,
         allOrders: orders.length,
         completedOrders: completed.length,
-        orders: orders.map(o => ({ product_id: o.product_id, status: o.status }))
+        orders: orders.map(o => ({ product_id: o.product_id, status: o.status, amount: o.amount_total }))
       })
       setCompletedOrders(completed)
     } catch (error) {
-      console.error('Error loading completed orders:', error)
+      console.error('❌ Error loading completed orders:', error)
+    }
+  }
+
+  // Manual refresh function for payment status
+  const refreshPaymentStatus = async () => {
+    if (project) {
+      console.log('🔄 Manually refreshing payment status...')
+      await loadCompletedOrders()
     }
   }
 
@@ -542,13 +572,24 @@ export default function FNOLPage() {
                       {existingFNOL.fnol_number && (
                         <p className="text-sm text-gray-600">Claim Number: {existingFNOL.fnol_number}</p>
                       )}
-                      <p className="text-sm text-gray-600">
-                        FNOL Generation Fee: {isFNOLPaymentCompleted() ? (
-                          <span className="text-green-600 font-medium">✓ Paid</span>
-                        ) : (
-                          <span className="text-red-600 font-medium">✗ Not Paid</span>
-                        )}
-                      </p>
+                      <div className="flex items-center gap-2">
+                        <p className="text-sm text-gray-600">
+                          FNOL Generation Fee: {isFNOLPaymentCompleted() ? (
+                            <span className="text-green-600 font-medium">✓ Paid</span>
+                          ) : (
+                            <span className="text-red-600 font-medium">✗ Not Paid</span>
+                          )}
+                        </p>
+                        <Button 
+                          variant="ghost" 
+                          size="sm" 
+                          onClick={refreshPaymentStatus}
+                          className="h-6 w-6 p-0"
+                          title="Refresh payment status"
+                        >
+                          🔄
+                        </Button>
+                      </div>
                     </div>
                     <div className="flex gap-2">
                       {existingFNOL.status === 'pending' && (

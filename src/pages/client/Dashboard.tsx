@@ -294,6 +294,14 @@ export default function ClientDashboard() {
                           </Button>
                         </DropdownMenuTrigger>
                         <DropdownMenuContent align="end">
+                          {project.status === 'matched' && (
+                            <DropdownMenuItem asChild>
+                              <Link to={`/client/review-estimates/${project.id}`}>
+                                <FileText className="mr-2 h-4 w-4" />
+                                Review Estimates
+                              </Link>
+                            </DropdownMenuItem>
+                          )}
                           <AlertDialog>
                             <AlertDialogTrigger asChild>
                               <DropdownMenuItem 

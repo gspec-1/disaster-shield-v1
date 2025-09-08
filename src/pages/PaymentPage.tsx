@@ -242,6 +242,63 @@ export default function PaymentPage() {
         if (!updateError) {
           setProject(prev => ({ ...prev, payment_status: 'paid' }))
           toast.success('✅ All payments completed! Project status updated to Paid.', { id: 'payment-check' })
+          
+          // Send notification to contractor about payment completion
+          try {
+            if (project.assigned_contractor_id) {
+              // Get contractor details
+              const { data: contractorData } = await supabase
+                .from('contractors')
+                .select('contact_name, company_name, email')
+                .eq('id', project.assigned_contractor_id)
+                .single()
+
+              if (contractorData?.email) {
+                // Calculate total amount from completed orders
+                const totalAmount = completedOrders.reduce((sum, order) => sum + (order.amount_total || 0), 0)
+                
+                // Send email notification
+                const { resendEmailService } = await import('@/lib/email/resend-service')
+                await resendEmailService.sendPaymentCompletedNotification({
+                  contractorEmail: contractorData.email,
+                  contractorName: contractorData.contact_name,
+                  companyName: contractorData.company_name,
+                  projectDetails: {
+                    address: project.address,
+                    city: project.city,
+                    state: project.state,
+                    peril: project.peril,
+                    contactName: project.contact_name,
+                    contactPhone: project.contact_phone
+                  },
+                  totalAmount
+                })
+
+                // Create notification for contractor
+                const { data: contractorProfile } = await supabase
+                  .from('contractors')
+                  .select('user_id')
+                  .eq('id', project.assigned_contractor_id)
+                  .single()
+
+                if (contractorProfile?.user_id) {
+                  await supabase.from('notifications').insert({
+                    user_id: contractorProfile.user_id,
+                    type: 'payment_completed',
+                    title: '💰 Payment Completed!',
+                    message: `All payments have been completed for your project at ${project.address}. You can now begin work!`,
+                    data: {
+                      projectId: project.id,
+                      totalAmount
+                    }
+                  })
+                }
+              }
+            }
+          } catch (notificationError) {
+            // Don't fail the whole process for notification errors
+            console.error('Error sending payment completion notification:', notificationError)
+          }
         } else {
           toast.error('❌ Error updating project status. Please try again.', { id: 'payment-check' })
         }
@@ -566,26 +623,26 @@ export default function PaymentPage() {
                 <div className="border rounded-lg p-6">
                   <div className="flex justify-between items-start mb-4">
                     <div>
-                      <h3 className="text-lg font-semibold text-gray-900">{STRIPE_PRODUCTS.EMERGENCY_RESPONSE_FEE.name}</h3>
-                      <p className="text-gray-600 text-sm">{STRIPE_PRODUCTS.EMERGENCY_RESPONSE_FEE.description}</p>
+                      <h3 className="text-lg font-semibold text-gray-900">{STRIPE_PRODUCTS.REPAIR_COST_ESTIMATE.name}</h3>
+                      <p className="text-gray-600 text-sm">{STRIPE_PRODUCTS.REPAIR_COST_ESTIMATE.description}</p>
                     </div>
                     <div className="text-right">
-                      <p className="text-2xl font-bold text-gray-900">{formatPrice(STRIPE_PRODUCTS.EMERGENCY_RESPONSE_FEE.amount)}</p>
-                      <p className="text-sm text-gray-500">One-time</p>
+                      <p className="text-2xl font-bold text-gray-900">Dynamic Pricing</p>
+                      <p className="text-sm text-gray-500">Based on contractor estimate</p>
                     </div>
                   </div>
-                  {isPaymentCompletedLocal('EMERGENCY_RESPONSE_FEE') ? (
+                  {isPaymentCompletedLocal('REPAIR_COST_ESTIMATE') ? (
                     <div className="flex items-center justify-center p-4 bg-green-50 border border-green-200 rounded-lg">
                       <CheckCircle className="h-5 w-5 text-green-600 mr-2" />
                       <span className="text-green-800 font-medium">Payment Done!</span>
                     </div>
                   ) : (
                     <Button 
-                      onClick={() => handlePayment('EMERGENCY_RESPONSE_FEE')}
+                      onClick={() => handlePayment('REPAIR_COST_ESTIMATE')}
                       disabled={processing}
                       className="w-full bg-orange-600 hover:bg-orange-700"
                     >
-                      {processing ? 'Processing...' : 'Pay Emergency Fee'}
+                      {processing ? 'Processing...' : 'Pay Repair Cost'}
                     </Button>
                   )}
                 </div>

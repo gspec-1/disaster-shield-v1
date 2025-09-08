@@ -13,7 +13,7 @@ export const PAYMENT_GROUPS: Record<string, PaymentGroup> = {
   CORE_PROJECT: {
     name: 'Core Project Payments',
     description: 'Required payments to complete the project',
-    products: ['SECURITY_DEPOSIT', 'DISASTERSHIELD_SERVICE_FEE', 'EMERGENCY_RESPONSE_FEE'],
+    products: ['SECURITY_DEPOSIT', 'DISASTERSHIELD_SERVICE_FEE', 'REPAIR_COST_ESTIMATE'],
     required: true
   },
   

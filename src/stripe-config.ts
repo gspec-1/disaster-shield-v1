@@ -17,13 +17,13 @@ export const STRIPE_PRODUCTS = {
     mode: 'payment' as const,
     amount: 9900, // $99.00 in cents
   },
-  EMERGENCY_RESPONSE_FEE: {
-    id: 'prod_SzI6FIQTBIZVnx',
-    priceId: 'price_1S3JWHGYzYF1t9Adajwh5Lfo', // This should be your TEST mode price ID
-    name: 'Emergency Response Fee',
-    description: 'Priority contractor matching for urgent claims',
+  REPAIR_COST_ESTIMATE: {
+    id: 'prod_DYNAMIC_REPAIR_COST', // This will be created dynamically
+    priceId: 'price_DYNAMIC_REPAIR_COST', // This will be created dynamically
+    name: 'Repair Cost Estimate',
+    description: 'Contractor estimate for repair work',
     mode: 'payment' as const,
-    amount: 14900, // $149.00 in cents
+    amount: 0, // This will be set dynamically based on contractor estimate
   },
   FNOL_GENERATION_FEE: {
     id: 'prod_T19oCXAy5c5fHQ',

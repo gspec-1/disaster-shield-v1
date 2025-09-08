@@ -93,9 +93,9 @@ export default function AdminDashboard() {
         supabase.from('projects').select('id, status, created_at'),
         supabase.from('contractors').select('id, capacity, created_at'),
         supabase.from('profiles').select('id, role, created_at'),
-        supabase.from('fnol_records').select('id, status, created_at'),
+        supabase.from('fnol_records').select('id, status, created_at').limit(100),
         supabase.from('projects').select('id, contact_name, peril, status, created_at').order('created_at', { ascending: false }).limit(5),
-        supabase.from('fnol_records').select('id, status, created_at, projects!inner(contact_name, peril)').order('created_at', { ascending: false }).limit(5)
+        supabase.from('fnol_records').select('id, status, created_at').order('created_at', { ascending: false }).limit(5)
       ])
 
       const projects = projectsResult.data || []
@@ -333,12 +333,13 @@ export default function AdminDashboard() {
                     {stats?.recentFNOLs.slice(0, 3).map((fnol) => (
                       <div key={fnol.id} className="flex items-center justify-between p-2 bg-gray-50 rounded">
                         <div>
-                          <p className="text-sm font-medium">{fnol.projects?.contact_name}</p>
-                          <p className="text-xs text-gray-600 capitalize">{fnol.projects?.peril} damage</p>
+                          <p className="text-sm font-medium">FNOL #{fnol.id.slice(0, 8)}</p>
+                          <p className="text-xs text-gray-600">{new Date(fnol.created_at).toLocaleDateString()}</p>
                         </div>
                         <Badge variant={
                           fnol.status === 'acknowledged' ? 'default' :
                           fnol.status === 'pending' ? 'secondary' :
+                          fnol.status === 'submitted' ? 'secondary' :
                           'destructive'
                         }>
                           {fnol.status}

@@ -33,3 +33,12 @@ yarn-error.log*
 # typescript
 *.tsbuildinfo
 next-env.d.ts
+
+# scripts folder
+/scripts
+
+# migrations folder
+/supabase/migrations
+
+# fix and testing
+/testing

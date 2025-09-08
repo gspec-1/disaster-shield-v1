@@ -721,12 +721,14 @@ export default function ProjectPortal() {
               </CardContent>
               <CardFooter>
                 <div className="w-full flex justify-end">
-                  <Link to={`/fnol/${project.id}`}>
-                    <Button variant="outline" size="sm">
-                      <FileText className="h-4 w-4 mr-2" />
-                      {project.fnol_status === 'not_filed' ? 'Generate FNOL' : 'View FNOL'}
-                    </Button>
-                  </Link>
+                  {!isContractor && (
+                    <Link to={`/fnol/${project.id}`}>
+                      <Button variant="outline" size="sm">
+                        <FileText className="h-4 w-4 mr-2" />
+                        {project.fnol_status === 'not_filed' ? 'Generate FNOL' : 'View FNOL'}
+                      </Button>
+                    </Link>
+                  )}
                 </div>
               </CardFooter>
             </Card>

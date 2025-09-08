@@ -102,6 +102,7 @@ export default function FNOLPage() {
   const [selectedCompany, setSelectedCompany] = useState<InsuranceCompany | null>(null)
   const [completedOrders, setCompletedOrders] = useState<any[]>([])
   const [checkingPayment, setCheckingPayment] = useState(false)
+  const [userRole, setUserRole] = useState<string | null>(null)
   
   const [formData, setFormData] = useState<FNOLFormData>({
     insurance_company_id: '',
@@ -162,6 +163,28 @@ export default function FNOLPage() {
 
   const loadData = async () => {
     try {
+      // Check user role first
+      const { data: { user } } = await supabase.auth.getUser()
+      if (user) {
+        const { data: profileData } = await supabase
+          .from('profiles')
+          .select('role')
+          .eq('id', user.id)
+          .single()
+        
+        setUserRole(profileData?.role || null)
+        
+        // If user is contractor or admin, redirect them away
+        if (profileData?.role === 'contractor') {
+          navigate('/contractor/dashboard')
+          return
+        }
+        if (profileData?.role === 'admin') {
+          navigate('/admin')
+          return
+        }
+      }
+
       // Load project data
       const { data: projectData, error: projectError } = await supabase
         .from('projects')

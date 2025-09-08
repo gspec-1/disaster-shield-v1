@@ -166,11 +166,13 @@ export default function FNOLPage() {
             company.name.toLowerCase() === projectData.carrier_name.toLowerCase()
           )
           if (matchingCompany) {
+            const submissionMethod = matchingCompany.requires_manual_submission ? 'manual' : 'api'
+            console.log('Auto-selected company:', matchingCompany.display_name, 'Submission method:', submissionMethod)
             setSelectedCompany(matchingCompany)
             setFormData(prev => ({
               ...prev,
               insurance_company_id: matchingCompany.id,
-              submission_method: matchingCompany.submission_method
+              submission_method: submissionMethod
             }))
           }
         }
@@ -188,15 +190,26 @@ export default function FNOLPage() {
     const company = insuranceCompanies.find(c => c.id === companyId)
     setSelectedCompany(company || null)
     
+    const submissionMethod = company?.requires_manual_submission ? 'manual' : 'api'
+    console.log('Company selected:', company?.display_name, 'Submission method:', submissionMethod)
+    
     setFormData(prev => ({
       ...prev,
       insurance_company_id: companyId,
-      submission_method: company?.requires_manual_submission ? 'manual' : 'api'
+      submission_method: submissionMethod
     }))
   }
 
   const generateFNOLDocument = async () => {
     if (!project || !selectedCompany) return
+
+    // Ensure submission_method is set
+    if (!formData.submission_method) {
+      setFormData(prev => ({
+        ...prev,
+        submission_method: selectedCompany.requires_manual_submission ? 'manual' : 'api'
+      }))
+    }
 
     try {
       // Generate FNOL document content
@@ -242,6 +255,14 @@ export default function FNOLPage() {
       }
 
       // Create FNOL record
+      console.log('Creating FNOL record with data:', {
+        project_id: project.id,
+        insurance_company_id: selectedCompany.id,
+        submission_method: formData.submission_method,
+        status: 'pending',
+        submission_notes: formData.submission_notes
+      })
+      
       const { data: fnolRecord, error: fnolError } = await supabase
         .from('fnol_records')
         .insert({

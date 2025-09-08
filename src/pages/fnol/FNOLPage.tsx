@@ -153,7 +153,6 @@ export default function FNOLPage() {
 
     const interval = setInterval(() => {
       if (!isFNOLPaymentCompleted()) {
-        console.log('🔄 Auto-refreshing payment status...')
         loadCompletedOrders()
       }
     }, 30000) // Check every 30 seconds
@@ -211,7 +210,6 @@ export default function FNOLPage() {
           )
           if (matchingCompany) {
             const submissionMethod = matchingCompany.requires_manual_submission ? 'manual' : 'api'
-            console.log('Auto-selected company:', matchingCompany.display_name, 'Submission method:', submissionMethod)
             setSelectedCompany(matchingCompany)
             setFormData(prev => ({
               ...prev,
@@ -223,7 +221,6 @@ export default function FNOLPage() {
       }
 
     } catch (error) {
-      console.error('Error loading data:', error)
       toast.error('Failed to load project data')
     } finally {
       setLoading(false)
@@ -235,7 +232,6 @@ export default function FNOLPage() {
     setSelectedCompany(company || null)
     
     const submissionMethod = company?.requires_manual_submission ? 'manual' : 'api'
-    console.log('Company selected:', company?.display_name, 'Submission method:', submissionMethod)
     
     setFormData(prev => ({
       ...prev,
@@ -299,13 +295,6 @@ export default function FNOLPage() {
       }
 
       // Create FNOL record
-      console.log('Creating FNOL record with data:', {
-        project_id: project.id,
-        insurance_company_id: selectedCompany.id,
-        submission_method: formData.submission_method,
-        status: 'pending',
-        submission_notes: formData.submission_notes
-      })
       
       const { data: fnolRecord, error: fnolError } = await supabase
         .from('fnol_records')
@@ -331,7 +320,6 @@ export default function FNOLPage() {
       setExistingFNOL(fnolRecord)
 
     } catch (error) {
-      console.error('Error generating FNOL:', error)
       toast.error('Failed to generate FNOL document')
     }
   }
@@ -369,7 +357,6 @@ export default function FNOLPage() {
       await loadData()
 
     } catch (error) {
-      console.error('Error submitting FNOL:', error)
       toast.error('Failed to submit FNOL')
     } finally {
       setSubmitting(false)
@@ -379,11 +366,6 @@ export default function FNOLPage() {
   // Check if FNOL Generation Fee has been paid
   const isFNOLPaymentCompleted = () => {
     const isCompleted = isPaymentCompleted('FNOL_GENERATION_FEE', completedOrders)
-    console.log('FNOL Payment Check:', {
-      completedOrders: completedOrders.length,
-      orders: completedOrders.map(o => ({ product_id: o.product_id, status: o.status })),
-      isCompleted
-    })
     return isCompleted
   }
 
@@ -405,7 +387,6 @@ export default function FNOLPage() {
 
       await redirectToCheckout(url)
     } catch (error) {
-      console.error('Error creating checkout session:', error)
       toast.error('Failed to initiate payment')
     } finally {
       setCheckingPayment(false)
@@ -417,25 +398,16 @@ export default function FNOLPage() {
     if (!project) return
 
     try {
-      console.log('🔄 Loading completed orders for project:', project.id)
       const orders = await getUserOrders(project.id)
       const completed = orders.filter(order => order.status === 'completed')
-      console.log('📊 Completed orders loaded:', {
-        projectId: project.id,
-        allOrders: orders.length,
-        completedOrders: completed.length,
-        orders: orders.map(o => ({ product_id: o.product_id, status: o.status, amount: o.amount_total }))
-      })
       setCompletedOrders(completed)
     } catch (error) {
-      console.error('❌ Error loading completed orders:', error)
     }
   }
 
   // Manual refresh function for payment status
   const refreshPaymentStatus = async () => {
     if (project) {
-      console.log('🔄 Manually refreshing payment status...')
       await loadCompletedOrders()
     }
   }

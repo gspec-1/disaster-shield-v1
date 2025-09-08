@@ -89,25 +89,10 @@ export default function ProjectPortal() {
           .select('*')
           .eq('project_id', id)
 
-        console.log('Media loading results:', { mediaData, mediaError, projectId: id })
 
         if (!mediaError) {
           setMedia(mediaData || [])
-          console.log('Media loaded successfully:', mediaData?.length || 0, 'items')
-          
-          // Log details about each media item
-          mediaData?.forEach((item, index) => {
-            console.log(`Media item ${index}:`, {
-              id: item.id,
-              type: item.type,
-              filename: item.filename,
-              storage_path: item.storage_path,
-              mime_type: item.mime_type,
-              file_size: item.file_size
-            })
-          })
         } else {
-          console.error('Error loading media:', mediaError)
         }
 
         // Load match requests
@@ -151,15 +136,11 @@ export default function ProjectPortal() {
 
             if (!ordersError) {
               setCompletedOrders(ordersData || [])
-              console.log('Loaded completed orders:', ordersData?.length || 0, 'orders')
             } else {
-              console.error('Error loading orders:', ordersError)
             }
           } else {
-            console.log('No Stripe customer found for user:', user.id)
           }
         } else {
-          console.log('No user found, skipping order loading')
         }
 
       } catch (error: any) {
@@ -179,7 +160,6 @@ export default function ProjectPortal() {
     const pollForOrders = setInterval(async () => {
       try {
         if (!user?.id) {
-          console.log('No user found, skipping order polling')
           return
         }
 
@@ -201,15 +181,11 @@ export default function ProjectPortal() {
 
           if (!ordersError && ordersData) {
             setCompletedOrders(ordersData)
-            console.log('Polled completed orders:', ordersData.length, 'orders')
           } else if (ordersError) {
-            console.error('Error polling orders:', ordersError)
           }
         } else if (customerError) {
-          console.error('Error polling customer data:', customerError)
         }
       } catch (error) {
-        console.error('Error polling for orders:', error)
       }
     }, 5000) // Poll every 5 seconds
 
@@ -283,7 +259,6 @@ export default function ProjectPortal() {
         toast.error(workflowResult.errors.length > 0 ? workflowResult.errors[0] : 'No contractors found in your area for this type of damage.')
       }
     } catch (error: any) {
-      console.error('Error triggering matching:', error)
       toast.error('Failed to find contractors. Please try again.')
     } finally {
       setTriggeringMatching(false)
@@ -320,7 +295,6 @@ export default function ProjectPortal() {
       // Trigger matching again
       await handleTriggerMatching()
     } catch (error) {
-      console.error('Error re-matching contractors:', error)
       toast.error('Failed to rematch contractors. Please try again.')
     } finally {
       setRematching(false)
@@ -332,7 +306,6 @@ export default function ProjectPortal() {
     
     setDeletingProject(true)
     try {
-      console.log('Deleting project:', project.id, 'for user:', user.id)
       
       // Delete the project with explicit user check
       if (!supabase) throw new Error('Database connection not configured')
@@ -344,7 +317,6 @@ export default function ProjectPortal() {
         .select()
 
       if (deleteError) {
-        console.error('Error deleting project:', deleteError)
         throw new Error(deleteError.message)
       }
 
@@ -352,11 +324,9 @@ export default function ProjectPortal() {
         throw new Error('Project not found or you do not have permission to delete it')
       }
 
-      console.log('Project deleted successfully:', deletedData)
       toast.success('Claim deleted successfully')
       navigate('/client/dashboard')
     } catch (error: any) {
-      console.error('Error deleting project:', error)
       toast.error(error.message || 'Failed to delete claim. Please try again.')
     } finally {
       setDeletingProject(false)
@@ -544,11 +514,6 @@ export default function ProjectPortal() {
                         .from('media')
                         .getPublicUrl(item.storage_path)
                       
-                      console.log('Rendering media item:', {
-                        item,
-                        publicUrl: urlData.publicUrl,
-                        storagePath: item.storage_path
-                      })
                       
                       return (
                         <div key={item.id} className="relative group">
@@ -591,7 +556,6 @@ export default function ProjectPortal() {
                           ) : item.type === 'audio' ? (
                             <div className="aspect-square bg-blue-100 rounded-lg flex flex-col items-center justify-center p-4 relative z-10"
                                  onClick={(e) => {
-                                   console.log('Audio container clicked!', e.target)
                                    // Don't prevent default - let the audio controls handle the click
                                  }}>
                               <div className="w-12 h-12 bg-blue-200 rounded-full flex items-center justify-center mb-2">
@@ -604,26 +568,7 @@ export default function ProjectPortal() {
                                   className="w-full h-8 relative z-30"
                                   preload="metadata"
                                   onError={(e) => {
-                                    console.error('Audio loading error:', e)
-                                    console.error('Audio URL:', urlData.publicUrl)
-                                    console.error('Audio item:', item)
-                                    console.error('Error details:', {
-                                      networkState: e.currentTarget.networkState,
-                                      readyState: e.currentTarget.readyState,
-                                      error: e.currentTarget.error
-                                    })
-                                  }}
-                                  onLoadStart={() => {
-                                    console.log('Audio loading started:', urlData.publicUrl)
-                                  }}
-                                  onCanPlay={() => {
-                                    console.log('Audio can play:', urlData.publicUrl)
-                                  }}
-                                  onLoadedMetadata={(e) => {
-                                    console.log('Audio metadata loaded:', {
-                                      duration: e.currentTarget.duration,
-                                      url: urlData.publicUrl
-                                    })
+                                    // Audio loading error - handled silently
                                   }}
                                 >
                                   Your browser does not support the audio element.
@@ -633,7 +578,6 @@ export default function ProjectPortal() {
                                 </p>
                                 <p className="text-xs text-blue-600 mt-1 text-center cursor-pointer hover:underline relative z-40"
                                    onClick={() => {
-                                     console.log('Direct audio URL:', urlData.publicUrl)
                                      window.open(urlData.publicUrl, '_blank')
                                    }}>
                                   Open in new tab
@@ -839,12 +783,6 @@ export default function ProjectPortal() {
                   )}
                   {/* Payment Progress - Integrated into timeline */}
                   {project.assigned_contractor_id && (
-                    console.log('Payment status debug:', {
-                      projectPaymentStatus: project.payment_status,
-                      completedOrdersCount: completedOrders.length,
-                      completedRequiredCount: getCompletedRequiredPaymentsCount(),
-                      completedOrders: completedOrders.map(o => ({ amount: o.amount_total, product: o.product_id }))
-                    }),
                     <div className="flex items-center gap-3">
                       <div className={`w-3 h-3 rounded-full ${
                         areAllRequiredPaymentsCompletedLocal()

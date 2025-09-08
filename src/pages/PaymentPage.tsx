@@ -57,7 +57,6 @@ export default function PaymentPage() {
       // Check if payment was successful
       if (paymentStatus === 'success') {
         // Refresh the project data to get updated payment status
-        console.log('Payment success detected, refreshing project data...')
         // Force refresh the project data
         setTimeout(async () => {
           try {
@@ -69,10 +68,8 @@ export default function PaymentPage() {
             
             if (!refreshError && refreshedProject) {
               setProject(refreshedProject)
-              console.log('Project data refreshed:', refreshedProject.payment_status)
             }
           } catch (error) {
-            console.error('Error refreshing project data:', error)
           }
         }, 1000)
       }
@@ -129,7 +126,6 @@ export default function PaymentPage() {
               .maybeSingle()
 
             if (customerError) {
-              console.error('Error fetching customer data:', customerError)
               setCompletedOrders([])
             } else if (!customerData) {
               setCompletedOrders([])
@@ -145,13 +141,11 @@ export default function PaymentPage() {
               if (!ordersError) {
                 setCompletedOrders(completedOrdersData || [])
               } else {
-                console.error('Error loading completed orders:', ordersError)
                 setCompletedOrders([])
               }
             }
           }
         } catch (error) {
-          console.error('Error loading orders:', error)
           setOrders([])
         }
 
@@ -162,7 +156,6 @@ export default function PaymentPage() {
           }, 1000)
         }
       } catch (error) {
-        console.error('Error loading payment data:', error)
         setError('Failed to load project details')
       } finally {
         setLoading(false)
@@ -191,19 +184,6 @@ export default function PaymentPage() {
     ).length
   }
 
-  // Debug function to help troubleshoot payment detection
-  const debugPaymentState = () => {
-    console.log('🐛 Payment State:', {
-      user: user?.id,
-      project: project?.id,
-      completedOrders: completedOrders.length,
-      orders: completedOrders.map(o => ({
-        product: o.product_id,
-        status: o.status,
-        amount: o.amount_total
-      }))
-    })
-  }
 
   // Check if all required orders are completed and update project status
   const checkAndUpdatePaymentStatus = async () => {
@@ -225,7 +205,6 @@ export default function PaymentPage() {
         .maybeSingle()
 
       if (customerError) {
-        console.error('Error fetching customer data:', customerError)
         toast.error('Error fetching customer data', { id: 'payment-check' })
         return
       }
@@ -244,7 +223,6 @@ export default function PaymentPage() {
         .eq('status', 'completed')
 
       if (ordersError) {
-        console.error('Error fetching orders:', ordersError)
         toast.error('Error fetching payment orders', { id: 'payment-check' })
         return
       }
@@ -254,7 +232,6 @@ export default function PaymentPage() {
 
       // Update project payment status if all orders are completed
       if (allRequiredCompleted && project.payment_status !== 'paid') {
-        console.log('All required orders completed, updating project status to paid')
         toast.loading('All payments completed! Updating project status...', { id: 'payment-check' })
         
         const { error: updateError } = await supabase
@@ -276,7 +253,6 @@ export default function PaymentPage() {
         toast.info(`📊 ${completedRequiredCount} of ${requiredCount} required payments completed. ${requiredCount - completedRequiredCount} payments remaining.`, { id: 'payment-check' })
       }
     } catch (error) {
-      console.error('Error checking payment status:', error)
       toast.error('❌ Error checking payment status. Please try again.', { id: 'payment-check' })
     } finally {
       setCheckingStatus(false)
@@ -312,15 +288,8 @@ export default function PaymentPage() {
             .maybeSingle()
 
           if (customerError) {
-            console.error('Polling - Error fetching customer data:', customerError)
           } else if (!customerData) {
-            console.log('Polling - No Stripe customer found for user')
           } else {
-            console.log('Polling - Loading orders with filters:', {
-              customerId: customerData.customer_id,
-              projectId: project.id,
-              status: 'completed'
-            })
 
             const { data: completedOrdersData, error: ordersError } = await supabase
               .from('stripe_orders')
@@ -329,22 +298,14 @@ export default function PaymentPage() {
               .eq('project_id', project.id)
               .eq('status', 'completed')
 
-            console.log('Polling - Order query result:', {
-              completedOrdersData,
-              ordersError,
-              count: completedOrdersData?.length || 0
-            })
 
             if (!ordersError) {
-              console.log('Polling - Loaded completed orders:', completedOrdersData)
               setCompletedOrders(completedOrdersData || [])
             } else {
-              console.error('Polling - Error loading completed orders:', ordersError)
             }
           }
         }
       } catch (error) {
-        console.error('Error polling for payment updates:', error)
       }
     }, 10000) // Poll every 10 seconds (reduced frequency)
 
@@ -383,7 +344,6 @@ export default function PaymentPage() {
         // Set a timeout to check if the redirect hasn't happened
         // (this handles cases where the redirect silently fails)
         setTimeout(() => {
-          console.log('Redirect timeout - trying alternative approach')
           
           // Alternative approach: create a direct link for the user to click
           setError('Automatic redirect failed. Please click the button below to proceed to payment.')
@@ -403,14 +363,12 @@ export default function PaymentPage() {
           setProcessing(false)
         }, 3000)
       } catch (redirectError) {
-        console.error('Redirect error:', redirectError)
         
         // If redirectToCheckout fails, try direct URL redirect using Stripe's URL
         window.open(checkoutUrl, '_self')
       }
 
     } catch (error: any) {
-      console.error('Payment error:', error)
       
       // Check for various error conditions
       if (error.message) {
@@ -739,14 +697,6 @@ export default function PaymentPage() {
                       className="text-xs"
                     >
                       {checkingStatus ? '🔄 Checking...' : '🔄 Check Payment Status'}
-                    </Button>
-                    <Button 
-                      variant="secondary" 
-                      size="sm"
-                      onClick={debugPaymentState}
-                      className="text-xs"
-                    >
-                      🐛 Debug State
                     </Button>
                   </div>
                 )}

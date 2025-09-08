@@ -7,6 +7,12 @@ import { Shield, CreditCard, DollarSign, CheckCircle, AlertCircle, ArrowLeft, XC
 import { supabase } from '@/src/lib/supabase'
 import { createCheckoutSession, redirectToCheckout, getUserOrders } from '@/src/lib/stripe'
 import { STRIPE_PRODUCTS, formatPrice, type ProductKey } from '@/src/stripe-config'
+import { 
+  areAllRequiredPaymentsCompleted, 
+  isPaymentCompleted, 
+  getOverallPaymentStatus,
+  PAYMENT_GROUPS 
+} from '@/src/lib/payment-config'
 import SubscriptionStatus from '@/src/components/SubscriptionStatus'
 import NotificationBell from '@/src/components/NotificationBell'
 import { env } from '@/src/lib/env'
@@ -168,17 +174,13 @@ export default function PaymentPage() {
 
 
   // Helper function to check if a specific payment type is completed
-  const isPaymentCompleted = (productKey: string) => {
-    // The webhook stores product keys (like 'SECURITY_DEPOSIT') not Stripe product IDs
-    const isCompleted = completedOrders.some(order => order.product_id === productKey)
-    return isCompleted
+  const isPaymentCompletedLocal = (productKey: string) => {
+    return isPaymentCompleted(productKey, completedOrders)
   }
 
   // Helper function to check if all required payments are completed
   const areAllPaymentsCompleted = () => {
-    const requiredProducts = ['SECURITY_DEPOSIT', 'DISASTERSHIELD_SERVICE_FEE', 'EMERGENCY_RESPONSE_FEE']
-    const allCompleted = requiredProducts.every(productKey => isPaymentCompleted(productKey))
-    return allCompleted
+    return areAllRequiredPaymentsCompleted(completedOrders)
   }
 
   // Debug function to help troubleshoot payment detection
@@ -240,12 +242,7 @@ export default function PaymentPage() {
       }
 
       // Check if we have all required orders completed
-      const requiredProducts = ['SECURITY_DEPOSIT', 'DISASTERSHIELD_SERVICE_FEE', 'EMERGENCY_RESPONSE_FEE']
-      const completedProductIds = completedOrders?.map(order => order.product_id) || []
-      
-      const allRequiredCompleted = requiredProducts.every(productKey => 
-        completedProductIds.includes(productKey)
-      )
+      const allRequiredCompleted = areAllRequiredPaymentsCompleted(completedOrders || [])
 
       // Update project payment status if all orders are completed
       if (allRequiredCompleted && project.payment_status !== 'paid') {
@@ -266,8 +263,9 @@ export default function PaymentPage() {
       } else if (allRequiredCompleted) {
         toast.success('✅ All payments are already completed!', { id: 'payment-check' })
       } else {
-        const completedCount = completedProductIds.length
-        toast.info(`📊 ${completedCount} of 3 payments completed. ${3 - completedCount} payments remaining.`, { id: 'payment-check' })
+        const completedCount = completedOrders?.length || 0
+        const requiredCount = PAYMENT_GROUPS.CORE_PROJECT.products.length
+        toast.info(`📊 ${completedCount} of ${requiredCount} required payments completed. ${requiredCount - completedCount} payments remaining.`, { id: 'payment-check' })
       }
     } catch (error) {
       console.error('Error checking payment status:', error)
@@ -349,7 +347,7 @@ export default function PaymentPage() {
     if (!project || !user) return
 
     // CRITICAL: Check if payment is already completed to prevent duplicates
-    if (isPaymentCompleted(productKey)) {
+    if (isPaymentCompletedLocal(productKey)) {
       toast.error(`❌ This payment has already been completed! Please refresh the page to see updated status.`)
       return
     }
@@ -524,7 +522,7 @@ export default function PaymentPage() {
                 )}
 
                 {/* Security Deposit */}
-                {!isPaymentCompleted('SECURITY_DEPOSIT') && (
+                {!isPaymentCompletedLocal('SECURITY_DEPOSIT') && (
                   <div className="border rounded-lg p-6">
                     <div className="flex justify-between items-start mb-4">
                       <div>
@@ -550,7 +548,7 @@ export default function PaymentPage() {
                 )}
 
                 {/* Security Deposit - Completed */}
-                {isPaymentCompleted('SECURITY_DEPOSIT') && (
+                {isPaymentCompletedLocal('SECURITY_DEPOSIT') && (
                   <div className="border rounded-lg p-6 bg-green-50 border-green-200">
                     <div className="flex justify-between items-start mb-4">
                       <div>
@@ -581,7 +579,7 @@ export default function PaymentPage() {
                       <p className="text-sm text-gray-500">One-time</p>
                     </div>
                   </div>
-                  {isPaymentCompleted('DISASTERSHIELD_SERVICE_FEE') ? (
+                  {isPaymentCompletedLocal('DISASTERSHIELD_SERVICE_FEE') ? (
                     <div className="flex items-center justify-center p-4 bg-green-50 border border-green-200 rounded-lg">
                       <CheckCircle className="h-5 w-5 text-green-600 mr-2" />
                       <span className="text-green-800 font-medium">Payment Done!</span>
@@ -610,7 +608,7 @@ export default function PaymentPage() {
                       <p className="text-sm text-gray-500">One-time</p>
                     </div>
                   </div>
-                  {isPaymentCompleted('EMERGENCY_RESPONSE_FEE') ? (
+                  {isPaymentCompletedLocal('EMERGENCY_RESPONSE_FEE') ? (
                     <div className="flex items-center justify-center p-4 bg-green-50 border border-green-200 rounded-lg">
                       <CheckCircle className="h-5 w-5 text-green-600 mr-2" />
                       <span className="text-green-800 font-medium">Payment Done!</span>

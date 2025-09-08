@@ -24,6 +24,7 @@ import {
 import { supabase } from '@/src/lib/supabase'
 import { createCheckoutSession, redirectToCheckout, getUserOrders } from '@/src/lib/stripe'
 import { STRIPE_PRODUCTS, formatPrice } from '@/src/stripe-config'
+import { isPaymentCompleted } from '@/src/lib/payment-config'
 import { toast } from 'sonner'
 
 interface Project {
@@ -377,7 +378,7 @@ export default function FNOLPage() {
 
   // Check if FNOL Generation Fee has been paid
   const isFNOLPaymentCompleted = () => {
-    const isCompleted = completedOrders.some(order => order.product_id === 'FNOL_GENERATION_FEE')
+    const isCompleted = isPaymentCompleted('FNOL_GENERATION_FEE', completedOrders)
     console.log('FNOL Payment Check:', {
       completedOrders: completedOrders.length,
       orders: completedOrders.map(o => ({ product_id: o.product_id, status: o.status })),

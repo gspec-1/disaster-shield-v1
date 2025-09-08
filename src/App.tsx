@@ -41,10 +41,12 @@ function App() {
         <Route path="/auth/login" element={<LoginPage />} />
         <Route path="/auth/forgot-password" element={<ForgotPasswordPage />} />
         <Route path="/auth/reset-password" element={<ResetPasswordPage />} />
+        <Route path="/client/login" element={<LoginPage />} />
         <Route path="/client/dashboard" element={<ClientDashboard />} />
         <Route path="/client/browse-contractors" element={<BrowseContractors />} />
         <Route path="/client/review-estimates/:projectId" element={<ReviewEstimates />} />
         <Route path="/matching/:projectId" element={<MatchingPage />} />
+        <Route path="/contractor/login" element={<LoginPage />} />
         <Route path="/contractor/dashboard" element={<ContractorDashboard />} />
         <Route path="/contractor/browse-jobs" element={<BrowseJobs />} />
         <Route path="/contractor/profile" element={<ContractorProfile />} />

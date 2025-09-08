@@ -798,14 +798,14 @@ export default function ProjectPortal() {
                               {areAllRequiredPaymentsCompletedLocal() ? 'Payment Completed' : 
                                getCompletedRequiredPaymentsCount() > 0 ? 'Payment In Progress' : 'Payment Required'}
                             </p>
-                            <p className="text-sm text-gray-600">
+                            {/* <p className="text-sm text-gray-600">
                               {areAllRequiredPaymentsCompletedLocal()
                                 ? 'All required payments completed' 
                                 : getCompletedRequiredPaymentsCount() > 0 
                                 ? `${getCompletedRequiredPaymentsCount()} of ${PAYMENT_GROUPS.CORE_PROJECT.products.length} required payments completed`
                                 : 'Complete payment to begin work'
                               }
-                            </p>
+                            </p> */}
                           </div>
                           <Link to={`/payment/${project.id}`}>
                             <Button 

@@ -1,0 +1,99 @@
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>DISASTERSHIELD_TECHNICAL_SPECIFICATIONS</title>
+    <style>
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            line-height: 1.6;
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 20px;
+            background-color: #f5f5f5;
+        }
+        .container {
+            background-color: white;
+            padding: 40px;
+            border-radius: 8px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        }
+        h1 {
+            color: #2E86AB;
+            border-bottom: 3px solid #2E86AB;
+            padding-bottom: 10px;
+            margin-bottom: 30px;
+        }
+        h2 {
+            color: #A23B72;
+            margin-top: 30px;
+            margin-bottom: 15px;
+        }
+        h3 {
+            color: #F18F01;
+            margin-top: 25px;
+            margin-bottom: 10px;
+        }
+        p {
+            margin-bottom: 15px;
+            text-align: justify;
+        }
+        code {
+            background-color: #f4f4f4;
+            padding: 2px 4px;
+            border-radius: 3px;
+            font-family: 'Courier New', monospace;
+        }
+        pre {
+            background-color: #f4f4f4;
+            padding: 15px;
+            border-radius: 5px;
+            overflow-x: auto;
+            border-left: 4px solid #2E86AB;
+        }
+        pre code {
+            background-color: transparent;
+            padding: 0;
+        }
+        strong {
+            color: #2E86AB;
+        }
+        em {
+            color: #A23B72;
+        }
+        .header {
+            text-align: center;
+            margin-bottom: 40px;
+            padding: 20px;
+            background: linear-gradient(135deg, #2E86AB, #A23B72);
+            color: white;
+            border-radius: 8px;
+        }
+        .footer {
+            text-align: center;
+            margin-top: 40px;
+            padding: 20px;
+            background-color: #f8f9fa;
+            border-radius: 8px;
+            color: #666;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>🛡️ DisasterShield Platform</h1>
+            <p>Comprehensive Application Documentation</p>
+        </div>
+        
+        <p><h1>🛡️ DisasterShield - Technical Specifications & Feature Matrix</h1><br><br><h2>📊 Feature Matrix by User Role</h2><br><br>| Feature | Client | Contractor | Admin | Description |<br>|---------|--------|------------|-------|-------------|<br>| <strong>Authentication</strong> | ✅ | ✅ | ✅ | Email/password with role-based access |<br>| <strong>Dashboard</strong> | ✅ | ✅ | ✅ | Role-specific dashboard with relevant data |<br>| <strong>Project Management</strong> | ✅ | ✅ | ✅ | View and manage assigned projects |<br>| <strong>Media Upload</strong> | ✅ | ❌ | ✅ | Upload photos and voice notes |<br>| <strong>Contractor Matching</strong> | ✅ | ❌ | ✅ | Automated contractor selection |<br>| <strong>Estimate Submission</strong> | ❌ | ✅ | ✅ | Submit detailed cost estimates |<br>| <strong>Estimate Review</strong> | ✅ | ❌ | ✅ | Review and accept/reject estimates |<br>| <strong>Payment Processing</strong> | ✅ | ❌ | ✅ | Secure Stripe payment integration |<br>| <strong>FNOL Generation</strong> | ✅ | ❌ | ✅ | First Notice of Loss document creation |<br>| <strong>Insurance Integration</strong> | ✅ | ❌ | ✅ | Direct API submission to insurers |<br>| <strong>Notification System</strong> | ✅ | ✅ | ✅ | Real-time in-app notifications |<br>| <strong>Email Notifications</strong> | ✅ | ✅ | ✅ | Transactional email system |<br>| <strong>SMS Notifications</strong> | ✅ | ✅ | ✅ | Twilio SMS integration |<br>| <strong>User Management</strong> | ❌ | ❌ | ✅ | Manage users and roles |<br>| <strong>System Analytics</strong> | ❌ | ❌ | ✅ | Business intelligence dashboard |<br>| <strong>Insurance Company Management</strong> | ❌ | ❌ | ✅ | Manage insurance provider APIs |<br><br>---<br><br><h2>🔧 Technical Architecture Details</h2><br><br><h3><strong>Frontend Stack</strong></h3><br><pre><code>typescript<br>// Core Technologies<br>React 18.2.0          // UI Framework<br>TypeScript 5.2.2      // Type Safety<br>Vite 5.1.4           // Build Tool<br>Tailwind CSS 3.4.1   // Styling<br>Radix UI             // Component Library<br><br>// Key Libraries<br>React Router 6.21.3  // Client-side routing<br>React Hook Form 7.49.3 // Form management<br>Zod 3.22.4          // Schema validation<br>Stripe.js           // Payment processing<br>Supabase JS 2.39.7  // Backend integration<br></code></pre><br><br><h3><strong>Backend Stack</strong></h3><br><pre><code>typescript<br>// Core Technologies<br>Supabase             // Backend-as-a-Service<br>PostgreSQL          // Database<br>Edge Functions      // Serverless functions<br>Row Level Security  // Database security<br><br>// Integrations<br>Stripe API          // Payment processing<br>Resend API          // Email service<br>Twilio API          // SMS service<br>Insurance APIs      // FNOL submission<br></code></pre><br><br><h3><strong>Database Schema</strong></h3><br><pre><code>sql<br>-- Core Tables<br>auth.users                    -- Supabase authentication<br>public.profiles              -- User profiles and roles<br>public.projects              -- Main project/claim records<br>public.contractors           -- Contractor information<br>public.media                 -- File attachments<br>public.stripe_customers      -- Payment customer mapping<br>public.stripe_orders         -- Payment order records<br>public.contractor_estimates  -- Dynamic pricing estimates<br>public.fnol_records          -- FNOL document records<br>public.insurance_companies   -- Insurance provider data<br>public.notifications         -- In-app notifications<br>public.match_requests        -- Contractor matching records<br></code></pre><br><br>---<br><br><h2>🚀 API Endpoints & Functions</h2><br><br><h3><strong>Supabase Edge Functions</strong></h3><br><br>#### <strong>Payment Processing</strong><br><pre><code>typescript<br>// POST /functions/v1/stripe-checkout<br>// Creates Stripe checkout sessions<br>// Parameters: projectId, productKey, userId<br>// Returns: checkout URL<br><br>// POST /functions/v1/stripe-webhook<br>// Handles Stripe webhook events<br>// Updates payment status in database<br>// Sends completion notifications<br><br>// POST /functions/v1/create-dynamic-product<br>// Creates dynamic Stripe products<br>// Parameters: estimateId, projectId<br>// Returns: productId, priceId<br></code></pre><br><br>#### <strong>Communication</strong><br><pre><code>typescript<br>// POST /functions/v1/send-email<br>// Sends transactional emails<br>// Parameters: to, subject, template, data<br>// Returns: success status<br><br>// POST /functions/v1/submit-fnol<br>// Submits FNOL to insurance companies<br>// Parameters: fnolData, insuranceCompanyId<br>// Returns: submission status<br></code></pre><br><br><h3><strong>Frontend API Integration</strong></h3><br><pre><code>typescript<br>// Authentication<br>supabase.auth.signUp()<br>supabase.auth.signIn()<br>supabase.auth.signOut()<br>supabase.auth.getUser()<br><br>// Database Operations<br>supabase.from('table').select()<br>supabase.from('table').insert()<br>supabase.from('table').update()<br>supabase.from('table').delete()<br><br>// Real-time Subscriptions<br>supabase.channel('table').on('*', callback)<br></code></pre><br><br>---<br><br><h2>💳 Payment System Architecture</h2><br><br><h3><strong>Payment Structure</strong></h3><br><pre><code>typescript<br>interface PaymentGroup {<br>  CORE_PROJECT: {<br>    products: ['SECURITY_DEPOSIT', 'DISASTERSHIELD_SERVICE_FEE', 'REPAIR_COST_ESTIMATE']<br>    required: true<br>  }<br>  FNOL_GENERATION: {<br>    products: ['FNOL_GENERATION_FEE']<br>    required: false<br>  }<br>}<br><br>// Payment Amounts<br>SECURITY_DEPOSIT: $500.00      // Refundable<br>DISASTERSHIELD_SERVICE_FEE: $99.00  // Platform fee<br>REPAIR_COST_ESTIMATE: Dynamic   // Based on contractor estimate<br>FNOL_GENERATION_FEE: $100.00   // Per FNOL generation<br></code></pre><br><br><h3><strong>Payment Flow</strong></h3><br>1. <strong>Estimate Acceptance</strong> → Dynamic Stripe product creation<br>2. <strong>Checkout Session</strong> → Secure payment processing<br>3. <strong>Webhook Processing</strong> → Database updates<br>4. <strong>Status Updates</strong> → Real-time UI updates<br>5. <strong>Notifications</strong> → Email/SMS alerts<br><br>---<br><br><h2>🔐 Security Implementation</h2><br><br><h3><strong>Authentication & Authorization</strong></h3><br><pre><code>typescript<br>// Role-based access control<br>interface UserRole {<br>  client: 'default' | null<br>  contractor: 'contractor'<br>  admin: 'admin'<br>}<br><br>// Route protection<br><ClientRoute>     // Client-only access<br><AdminRoute>      // Admin-only access<br><PublicRoute>     // Public access<br></code></pre><br><br><h3><strong>Database Security</strong></h3><br><pre><code>sql<br>-- Row Level Security policies<br>CREATE POLICY "Users can view own data" ON profiles<br>  FOR SELECT USING (auth.uid() = id);<br><br>CREATE POLICY "Contractors can view own estimates" ON contractor_estimates<br>  FOR SELECT USING (contractor_id IN (<br>    SELECT id FROM contractors WHERE user_id = auth.uid()<br>  ));<br></code></pre><br><br><h3><strong>API Security</strong></h3><br>- JWT token validation<br>- CORS configuration<br>- Rate limiting<br>- Input validation<br>- SQL injection prevention<br><br>---<br><br><h2>📱 User Interface Components</h2><br><br><h3><strong>Core UI Components</strong></h3><br><pre><code>typescript<br>// Layout Components<br><Dashboard>           // Role-specific dashboard<br><ProjectPortal>       // Project details view<br><PaymentPage>         // Payment processing<br><FNOLPage>           // Document generation<br><br>// Form Components<br><IntakeForm>         // Claim filing form<br><EstimateForm>       // Contractor estimate form<br><PaymentForm>        // Payment processing form<br><br>// Display Components<br><StatusTimeline>     // Project progress<br><MediaGallery>       // File attachments<br><NotificationBell>   // Real-time alerts<br></code></pre><br><br><h3><strong>Responsive Design</strong></h3><br>- Mobile-first approach<br>- Breakpoints: sm, md, lg, xl<br>- Touch-friendly interfaces<br>- Progressive Web App features<br><br>---<br><br><h2>🔄 Workflow Automation</h2><br><br><h3><strong>Contractor Matching Algorithm</strong></h3><br><pre><code>typescript<br>interface MatchingCriteria {<br>  geographicProximity: number    // Distance scoring<br>  serviceArea: boolean          // Coverage verification<br>  expertiseMatch: number        // Damage type specialization<br>  availability: boolean         // Capacity checking<br>  rating: number               // Performance history<br>}<br><br>// Scoring system<br>const score = (geographic <em> 0.4) + (expertise </em> 0.3) + (rating * 0.3)<br></code></pre><br><br><h3><strong>Email Automation</strong></h3><br><pre><code>typescript<br>// Email templates<br>- ContractorInvitation     // Job opportunity emails<br>- JobAcceptedConfirmation  // Assignment confirmations<br>- PaymentCompleted         // Payment notifications<br>- EstimateReceived         // Estimate notifications<br>- FNOLSubmitted           // Document status updates<br></code></pre><br><br><h3><strong>Notification System</strong></h3><br><pre><code>typescript<br>// Real-time notifications<br>interface Notification {<br>  type: 'job_accepted' | 'payment_completed' | 'estimate_received'<br>  title: string<br>  message: string<br>  data: object<br>  created_at: timestamp<br>}<br></code></pre><br><br>---<br><br><h2>📊 Data Flow & State Management</h2><br><br><h3><strong>State Management</strong></h3><br><pre><code>typescript<br>// React hooks for state<br>const [user, setUser] = useState<User | null>(null)<br>const [projects, setProjects] = useState<Project[]>([])<br>const [notifications, setNotifications] = useState<Notification[]>([])<br><br>// Real-time subscriptions<br>useEffect(() => {<br>  const subscription = supabase<br>    .channel('notifications')<br>    .on('postgres_changes', { event: 'INSERT', schema: 'public', table: 'notifications' }, <br>      (payload) => setNotifications(prev => [...prev, payload.new])<br>    )<br>    .subscribe()<br>  <br>  return () => subscription.unsubscribe()<br>}, [])<br></code></pre><br><br><h3><strong>Data Validation</strong></h3><br><pre><code>typescript<br>// Zod schemas<br>const ProjectSchema = z.object({<br>  address: z.string().min(1),<br>  city: z.string().min(1),<br>  state: z.string().min(2).max(2),<br>  peril: z.enum(['water', 'fire', 'wind', 'other']),<br>  description: z.string().min(10)<br>})<br></code></pre><br><br>---<br><br><h2>🚀 Deployment & Infrastructure</h2><br><br><h3><strong>Frontend Deployment (Vercel)</strong></h3><br><pre><code>json<br>{<br>  "buildCommand": "npm run build",<br>  "outputDirectory": "dist",<br>  "framework": "vite",<br>  "nodeVersion": "18.x"<br>}<br></code></pre><br><br><h3><strong>Backend Deployment (Supabase)</strong></h3><br><pre><code>bash<br><h1>Database migrations</h1><br>supabase db push<br><br><h1>Edge function deployment</h1><br>supabase functions deploy stripe-checkout<br>supabase functions deploy stripe-webhook<br>supabase functions deploy send-email<br>supabase functions deploy create-dynamic-product<br></code></pre><br><br><h3><strong>Environment Configuration</strong></h3><br><pre><code>typescript<br>// Environment variables<br>VITE_SUPABASE_URL=your_supabase_url<br>VITE_SUPABASE_ANON_KEY=your_anon_key<br>VITE_STRIPE_PUBLISHABLE_KEY=your_stripe_key<br>STRIPE_SECRET_KEY=your_secret_key<br>STRIPE_WEBHOOK_SECRET=your_webhook_secret<br>RESEND_API_KEY=your_resend_key<br>TWILIO_ACCOUNT_SID=your_twilio_sid<br>TWILIO_AUTH_TOKEN=your_twilio_token<br></code></pre><br><br>---<br><br><h2>📈 Performance & Scalability</h2><br><br><h3><strong>Performance Optimizations</strong></h3><br>- Code splitting with React.lazy()<br>- Image optimization and lazy loading<br>- Database query optimization<br>- Caching strategies<br>- CDN integration<br><br><h3><strong>Scalability Considerations</strong></h3><br>- Horizontal scaling with Supabase<br>- Edge function auto-scaling<br>- Database connection pooling<br>- File storage optimization<br>- API rate limiting<br><br>---<br><br><h2>🔍 Monitoring & Analytics</h2><br><br><h3><strong>Error Tracking</strong></h3><br><pre><code>typescript<br>// Error boundary implementation<br>class ErrorBoundary extends React.Component {<br>  componentDidCatch(error: Error, errorInfo: ErrorInfo) {<br>    // Log error to monitoring service<br>    console.error('Application error:', error, errorInfo)<br>  }<br>}<br></code></pre><br><br><h3><strong>Performance Monitoring</strong></h3><br>- Vercel Analytics integration<br>- Supabase performance metrics<br>- Stripe payment analytics<br>- User behavior tracking<br><br>---<br><br><h2>🧪 Testing Strategy</h2><br><br><h3><strong>Testing Framework</strong></h3><br><pre><code>typescript<br>// Unit tests<br>- Component testing with React Testing Library<br>- Function testing with Jest<br>- API testing with Supertest<br><br>// Integration tests<br>- End-to-end workflow testing<br>- Payment flow testing<br>- User authentication testing<br><br>// Manual testing<br>- Cross-browser compatibility<br>- Mobile responsiveness<br>- Accessibility compliance<br></code></pre><br><br>---<br><br><h2>📚 Documentation & Maintenance</h2><br><br><h3><strong>Code Documentation</strong></h3><br>- TypeScript type definitions<br>- JSDoc comments<br>- API documentation<br>- Component documentation<br><br><h3><strong>User Documentation</strong></h3><br>- User guides and tutorials<br>- FAQ system<br>- Video tutorials<br>- Support documentation<br><br>---<br><br><em>This technical specification provides detailed implementation information for the DisasterShield platform. For specific implementation questions or custom development requests, please contact the development team.</em><br></p>
+        
+        <div class="footer">
+            <p><strong>DisasterShield Platform</strong> - Complete Insurance Claim Management Solution</p>
+            <p>Generated on 9/9/2025</p>
+        </div>
+    </div>
+</body>
+</html>

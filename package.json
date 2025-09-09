@@ -18,7 +18,10 @@
     "deploy:create-dynamic-product-function": "supabase functions deploy create-dynamic-product",
     "deploy:all-functions": "supabase functions deploy send-email && supabase functions deploy stripe-checkout && supabase functions deploy stripe-webhook && supabase functions deploy create-dynamic-product",
     "set:url-local": "node scripts/update-env-url.js local",
-    "set:url-production": "node scripts/update-env-url.js production"
+    "set:url-production": "node scripts/update-env-url.js production",
+    "docs:convert": "node scripts/convert-to-word.js && node scripts/convert-to-html.js",
+    "docs:word": "node scripts/convert-to-word.js",
+    "docs:html": "node scripts/convert-to-html.js"
   },
   "dependencies": {
     "@hookform/resolvers": "^3.3.4",
@@ -84,6 +87,8 @@
     "eslint": "^8.56.0",
     "eslint-plugin-react-hooks": "^4.6.0",
     "eslint-plugin-react-refresh": "^0.4.5",
+    "officegen": "^0.6.5",
+    "pandoc": "^0.2.0",
     "postcss": "^8.4.35",
     "supabase": "^2.39.2",
     "tailwindcss": "^3.4.1",

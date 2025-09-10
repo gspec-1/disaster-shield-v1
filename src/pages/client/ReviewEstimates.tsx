@@ -38,8 +38,9 @@ interface Estimate {
     company_name: string
     email: string
     phone: string
-    license_number: string
-    years_experience: number
+    service_areas: string[]
+    trades: string[]
+    capacity: number
   }
 }
 
@@ -94,8 +95,9 @@ export default function ReviewEstimates() {
             company_name,
             email,
             phone,
-            license_number,
-            years_experience
+            service_areas,
+            trades,
+            capacity
           )
         `)
         .eq('project_id', projectId)
@@ -343,7 +345,7 @@ export default function ReviewEstimates() {
                       {formatPrice(estimate.estimate_amount)}
                     </div>
                     <Badge variant="outline" className="mt-1">
-                      {estimate.contractors.years_experience} years experience
+                      Capacity: {estimate.contractors.capacity} jobs
                     </Badge>
                   </div>
                 </div>
@@ -361,10 +363,10 @@ export default function ReviewEstimates() {
                         <Mail className="h-4 w-4 text-gray-400" />
                         <span>{estimate.contractors.email}</span>
                       </div>
-                      {estimate.contractors.license_number && (
+                      {estimate.contractors.trades && estimate.contractors.trades.length > 0 && (
                         <div className="flex items-center gap-2">
                           <FileText className="h-4 w-4 text-gray-400" />
-                          <span>License: {estimate.contractors.license_number}</span>
+                          <span>Trades: {estimate.contractors.trades.join(', ')}</span>
                         </div>
                       )}
                     </div>

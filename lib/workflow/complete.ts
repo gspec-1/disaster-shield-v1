@@ -184,22 +184,9 @@ export async function executeCompleteWorkflow(params: CompleteWorkflowParams): P
           action: 'decline'
         })
         
-        console.log('Generated tokens:', { 
-          projectId: params.project.id,
-          contractorId: contractor.id,
-          acceptToken: acceptToken.substring(0, 20) + '...',
-          declineToken: declineToken.substring(0, 20) + '...'
-        });
-        
         // Create the URLs for the email
         const acceptUrl = `${params.baseUrl || env.APP_URL || 'https://disaster-shield-v2.vercel.app'}/accept-job/${acceptToken}`;
         const declineUrl = `${params.baseUrl || env.APP_URL || 'https://disaster-shield-v2.vercel.app'}/decline-job/${declineToken}`;
-        
-        console.log('Email URLs:', { 
-          acceptUrl: acceptUrl.substring(0, 50) + '...',
-          declineUrl: declineUrl.substring(0, 50) + '...',
-          baseUrl: params.baseUrl || 'not provided'
-        });
 
         // Send email invitation with delay to prevent rate limiting
         const emailSent = await resendEmailService.sendContractorInvitation({
@@ -234,7 +221,6 @@ export async function executeCompleteWorkflow(params: CompleteWorkflowParams): P
         
         // Add delay between emails to prevent rate limiting (except for the last email)
         if (emailAttempts < topContractors.length) {
-          console.log(`⏳ Waiting 2 seconds before sending next email...`)
           await new Promise(resolve => setTimeout(resolve, 2000))
         }
       } catch (error) {

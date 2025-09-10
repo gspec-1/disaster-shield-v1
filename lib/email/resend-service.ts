@@ -24,14 +24,6 @@ export class ResendEmailService {
 
   async sendEmail(emailData: EmailData): Promise<boolean> {
     try {
-      // Log email details for debugging
-      console.log('📧 Sending email:', {
-        to: emailData.to,
-        subject: emailData.subject,
-        contentLength: emailData.html?.length || 0,
-        useDirectResend: import.meta.env.VITE_USE_DIRECT_RESEND === 'true',
-        baseUrl: this.baseUrl
-      });
       
       // IMPORTANT: We don't use direct Resend SDK in browser environments
       // due to CORS issues. Always use the Supabase Edge Function instead.
@@ -41,7 +33,7 @@ export class ResendEmailService {
         try {
           console.log('📧 Using direct Resend API...');
           const { data, error: resendError } = await this.resend.emails.send({
-            from: emailData.from || 'onboarding@resend.dev',
+            from: emailData.from,
             to: [emailData.to],
             subject: emailData.subject,
             html: emailData.html,
@@ -92,19 +84,6 @@ export class ResendEmailService {
         const acceptMatch = emailData.html.match(/href="([^"]*\/accept-job\/[^"]*)"/);
         const declineMatch = emailData.html.match(/href="([^"]*\/decline-job\/[^"]*)"/);
         
-        console.log('DEBUG - Email URLs:', {
-          acceptUrl: acceptMatch?.[1] || 'Not found',
-          acceptMatch: !!acceptMatch,
-          declineUrl: declineMatch?.[1] || 'Not found',
-          declineMatch: !!declineMatch,
-          htmlLength: emailData.html.length
-        });
-        
-        // Additional logging for link detection
-        console.log('Accept link detection:', {
-          hasAcceptJobPath: emailData.html.includes('/accept-job/'),
-          hasDeclineJobPath: emailData.html.includes('/decline-job/'),
-        });
       }
 
       let responseData
@@ -166,7 +145,6 @@ export class ResendEmailService {
       return true
     }
 
-    console.log('📧 Email sent successfully:', responseData)
     return true
 
     } catch (error) {
@@ -213,11 +191,6 @@ export class ResendEmailService {
     declineUrl: string
     reasons: string[]
   }): Promise<boolean> {
-    // Debug: log the URLs coming into the function
-    console.log('Debug - Contractor Invitation URLs:', {
-      acceptUrl: data.acceptUrl,
-      declineUrl: data.declineUrl
-    });
     
     const email = this.generateContractorInvitationEmail(data)
     return this.sendEmail({

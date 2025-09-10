@@ -21,7 +21,12 @@
     "set:url-production": "node scripts/update-env-url.js production",
     "docs:convert": "node scripts/convert-to-word.js && node scripts/convert-to-html.js",
     "docs:word": "node scripts/convert-to-word.js",
-    "docs:html": "node scripts/convert-to-html.js"
+    "docs:html": "node scripts/convert-to-html.js",
+    "env:sync": "node scripts/sync-env.js",
+    "env:sync:vercel": "node scripts/sync-env.js --vercel-only",
+    "env:sync:supabase": "node scripts/sync-env.js --supabase-only",
+    "env:status": "node scripts/sync-env.js --status",
+    "env:setup": "node scripts/setup-env-sync.js"
   },
   "dependencies": {
     "@hookform/resolvers": "^3.3.4",

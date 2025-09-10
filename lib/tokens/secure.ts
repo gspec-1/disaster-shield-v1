@@ -10,7 +10,6 @@ export interface AcceptTokenPayload {
 
 // Simple HMAC-like token generation (for demo purposes)
 function simpleHash(data: string, secret: string): string {
-  console.log('Generating hash for data length:', data.length);
   let hash = 0;
   const combined = data + secret;
   for (let i = 0; i < combined.length; i++) {
@@ -28,10 +27,7 @@ export function generateAcceptToken(payload: Omit<AcceptTokenPayload, 'exp'>): s
   const data = JSON.stringify(fullPayload);
   const secret = 'your-secret-key'; // In production, use environment variable
   const signature = simpleHash(data, secret);
-  
-  console.log('Generated token payload:', fullPayload);
   const token = `${btoa(data)}.${signature}`;
-  console.log('Token length:', token.length);
   
   return token;
 }
